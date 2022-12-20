@@ -51,6 +51,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\FLVERtoASCII\SoulsAssetPipeline\Havoc\Havoc.csproj" />
     <ProjectReference Include="..\Havoc\Havoc.csproj" />
     <ProjectReference Include="..\SoulsFormats\SoulsFormats\SoulsFormats.csproj" />
   </ItemGroup>
