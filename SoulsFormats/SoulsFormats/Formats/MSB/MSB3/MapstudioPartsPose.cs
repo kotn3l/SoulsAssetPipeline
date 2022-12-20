@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Numerics;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     public partial class MSB3
     {

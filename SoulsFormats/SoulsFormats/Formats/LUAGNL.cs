@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A list of global variable names for Lua scripts.

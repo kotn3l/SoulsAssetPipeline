@@ -1,8 +1,8 @@
 ﻿using System;
-using DefType = SoulsFormats.PARAMDEF.DefType;
-using EditFlags = SoulsFormats.PARAMDEF.EditFlags;
+using DefType = SoulsFormatsSAP.PARAMDEF.DefType;
+using EditFlags = SoulsFormatsSAP.PARAMDEF.EditFlags;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     internal static class ParamUtil
     {

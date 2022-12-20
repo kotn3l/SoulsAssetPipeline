@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     public partial class PARAM
     {

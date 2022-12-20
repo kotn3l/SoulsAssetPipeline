@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// An on-demand reader for BND3, BND4, BXF3, or BXF4 containers.

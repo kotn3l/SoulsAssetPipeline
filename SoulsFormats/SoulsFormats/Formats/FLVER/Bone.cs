@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     public partial class FLVER
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// Extremely barebones support for DeS MSBs, reading only models and part positions.

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// Controls when different events happen during animations; this specific version is used in DS3. Extension: .tae

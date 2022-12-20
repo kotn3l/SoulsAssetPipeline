@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace SoulsFormats.AC4
+namespace SoulsFormatsSAP.AC4
 {
     /// <summary>
     /// A multi-file container format used in Armored Core 4.

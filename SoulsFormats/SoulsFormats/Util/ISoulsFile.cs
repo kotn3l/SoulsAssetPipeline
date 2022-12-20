@@ -1,4 +1,4 @@
-﻿namespace SoulsFormats
+﻿namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A writeable file supporting transparent compression.

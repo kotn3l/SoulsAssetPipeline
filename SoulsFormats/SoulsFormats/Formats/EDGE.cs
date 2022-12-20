@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A Sekiro file that defines grapple points and hangable edges for a model.

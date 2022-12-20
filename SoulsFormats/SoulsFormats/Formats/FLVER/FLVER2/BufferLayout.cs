@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     public partial class FLVER2
     {

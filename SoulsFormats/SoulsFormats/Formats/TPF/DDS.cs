@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// Parser for .dds texture file headers.

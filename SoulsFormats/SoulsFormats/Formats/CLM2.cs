@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// Companion file to a FLVER that has something to do with cloth, probably.

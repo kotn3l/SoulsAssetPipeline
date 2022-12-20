@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SoulsFormats.Kuon
+namespace SoulsFormatsSAP.Kuon
 {
     /// <summary>
     /// Most BNDs inside ALL/ELL. Extension: .bnd

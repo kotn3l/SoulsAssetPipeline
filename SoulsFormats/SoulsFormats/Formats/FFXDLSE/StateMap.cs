@@ -3,7 +3,7 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     public partial class FFXDLSE
     {

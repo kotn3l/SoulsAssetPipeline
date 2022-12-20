@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     public partial class FLVER2
     {

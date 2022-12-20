@@ -1,6 +1,6 @@
-﻿using static SoulsFormats.Binder;
+﻿using static SoulsFormatsSAP.Binder;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// Metadata for a file in a binder container.

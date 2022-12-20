@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A file that defines the placement and properties of navmeshes in BB, DS3, and Sekiro. Extension: .nva

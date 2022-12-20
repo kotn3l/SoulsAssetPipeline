@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Assimp;
-using SoulsFormats;
+using SoulsFormatsSAP;
 using NMatrix = System.Numerics.Matrix4x4;
 using NVector3 = System.Numerics.Vector3;
 using NQuaternion = System.Numerics.Quaternion;
@@ -714,10 +714,10 @@ namespace SoulsAssetPipeline.FLVERImporting
 
         private static void GenerateLodAndMotionBlurFacesets(FLVER2.Mesh mesh)
         {
-            var newFacesetsToAdd = new List<SoulsFormats.FLVER2.FaceSet>();
+            var newFacesetsToAdd = new List<SoulsFormatsSAP.FLVER2.FaceSet>();
             foreach (var faceset in mesh.FaceSets)
             {
-                var lod1 = new SoulsFormats.FLVER2.FaceSet()
+                var lod1 = new SoulsFormatsSAP.FLVER2.FaceSet()
                 {
                     CullBackfaces = faceset.CullBackfaces,
                     Flags = FLVER2.FaceSet.FSFlags.LodLevel1,

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SoulsFormats.MWC
+namespace SoulsFormatsSAP.MWC
 {
     /// <summary>
     /// Container for model-related files used in Metal Wolf Chaos. Extension: _m.dat

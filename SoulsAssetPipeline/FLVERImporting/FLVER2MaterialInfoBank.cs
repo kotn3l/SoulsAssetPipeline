@@ -1,12 +1,12 @@
 ﻿using SoulsAssetPipeline.XmlStructs;
-using SoulsFormats;
+using SoulsFormatsSAP;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-using static SoulsFormats.FLVER2;
+using static SoulsFormatsSAP.FLVER2;
 
 namespace SoulsAssetPipeline.FLVERImporting
 {

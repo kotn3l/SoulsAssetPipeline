@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
-namespace SoulsFormats.Other
+namespace SoulsFormatsSAP.Other
 {
     /// <summary>
     /// A 3D model format used in Xbox games. Extension: .mdl

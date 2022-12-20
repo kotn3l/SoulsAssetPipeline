@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SoulsFormats.KF4
+namespace SoulsFormatsSAP.KF4
 {
     /// <summary>
     /// Specifically KF4.DAT, the main archive.

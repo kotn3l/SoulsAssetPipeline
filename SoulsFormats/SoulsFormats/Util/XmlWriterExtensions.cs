@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Xml;
 
-namespace SoulsFormats.XmlExtensions
+namespace SoulsFormatsSAP.XmlExtensions
 {
     internal static class XmlWriterExtensions
     {

@@ -1,5 +1,5 @@
 ﻿using SoulsAssetPipeline.Animation;
-using SoulsFormats;
+using SoulsFormatsSAP;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;

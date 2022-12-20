@@ -1,6 +1,6 @@
-﻿using static SoulsFormats.Binder;
+﻿using static SoulsFormatsSAP.Binder;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A generic file in a BND3, BND4, BXF3, or BXF4 container.

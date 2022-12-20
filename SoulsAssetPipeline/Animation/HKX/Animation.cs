@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using SoulsFormats;
+using SoulsFormatsSAP;
 
 #pragma warning disable CS1591
 

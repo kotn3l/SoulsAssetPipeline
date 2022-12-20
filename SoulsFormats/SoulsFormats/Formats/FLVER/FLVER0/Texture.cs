@@ -1,4 +1,4 @@
-﻿namespace SoulsFormats
+﻿namespace SoulsFormatsSAP
 {
     public partial class FLVER0
     {

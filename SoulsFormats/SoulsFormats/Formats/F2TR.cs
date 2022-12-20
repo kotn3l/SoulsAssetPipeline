@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A format that indicates which vertices of a FLVER are relevant for FaceGen. Extension: .flver2tri

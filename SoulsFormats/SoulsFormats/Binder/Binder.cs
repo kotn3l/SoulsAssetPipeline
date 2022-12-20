@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// Common format information for BND3, BXF3, BND4, and BXF4.

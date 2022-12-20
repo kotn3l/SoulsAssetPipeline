@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Numerics;
 
-using SoulsFormats;
+using SoulsFormatsSAP;
 using System.Runtime.InteropServices;
 
 namespace SoulsAssetPipeline.Animation.SIBCAM

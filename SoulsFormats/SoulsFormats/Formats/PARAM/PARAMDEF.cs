@@ -1,4 +1,4 @@
-﻿using SoulsFormats.XmlExtensions;
+﻿using SoulsFormatsSAP.XmlExtensions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -6,7 +6,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Xml;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A companion format to params that describes each field present in the rows. Extension: .def, .paramdef

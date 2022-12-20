@@ -2,7 +2,7 @@
 using System.IO;
 using System.Xml;
 
-namespace SoulsFormats.XmlExtensions
+namespace SoulsFormatsSAP.XmlExtensions
 {
     internal static class XmlNodeExtensions
     {

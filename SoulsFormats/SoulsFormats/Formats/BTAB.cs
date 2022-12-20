@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A DS3 and BB file that seems to modify material parameters to light certain static objects. Used to darken objects in shadows for example.

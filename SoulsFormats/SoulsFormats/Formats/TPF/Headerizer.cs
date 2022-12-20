@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using static SoulsFormats.DDS;
+using static SoulsFormatsSAP.DDS;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /* Known TPF texture formats
       0 - DXT1

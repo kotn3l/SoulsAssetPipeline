@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A UI configuration format used in DS1.

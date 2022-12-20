@@ -1,5 +1,5 @@
 ﻿using Assimp;
-using SoulsFormats;
+using SoulsFormatsSAP;
 using System;
 using System.Collections.Generic;
 using NMatrix = System.Numerics.Matrix4x4;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     public static partial class FLVER
     {

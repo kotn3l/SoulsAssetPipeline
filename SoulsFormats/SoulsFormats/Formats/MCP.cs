@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A navigation format used in DeS and DS1 that defines a basic graph of connected volumes. Extension: .mcp

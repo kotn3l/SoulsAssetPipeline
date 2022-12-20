@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A mysterious file format used in BB and DS3. Speculation: determines assets to load based on location in a map. Extension: .entryfilelist

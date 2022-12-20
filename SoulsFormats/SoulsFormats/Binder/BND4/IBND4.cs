@@ -1,4 +1,4 @@
-﻿namespace SoulsFormats
+﻿namespace SoulsFormatsSAP
 {
     internal interface IBND4
     {

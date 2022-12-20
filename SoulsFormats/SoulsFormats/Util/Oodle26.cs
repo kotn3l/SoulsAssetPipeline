@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     internal static class Oodle26
     {

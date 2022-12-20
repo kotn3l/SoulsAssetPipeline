@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// 3D models from Armored Core: For Answer to Another Century's Episode R. Extension: .flv, .flver

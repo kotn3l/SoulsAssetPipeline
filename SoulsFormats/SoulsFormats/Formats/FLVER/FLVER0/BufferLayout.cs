@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     public partial class FLVER0
     {

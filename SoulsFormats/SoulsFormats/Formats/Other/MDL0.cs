@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Numerics;
 
-namespace SoulsFormats.Other
+namespace SoulsFormatsSAP.Other
 {
     /// <summary>
     /// A model format used in the original Otogi. Extension: .mdl

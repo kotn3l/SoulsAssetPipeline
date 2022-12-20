@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A companion format to PARAM and PARAMDEF that provides friendly names for enumerated value types. Extension: .tdf

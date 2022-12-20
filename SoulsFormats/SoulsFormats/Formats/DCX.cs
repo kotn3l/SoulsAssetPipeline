@@ -2,7 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A general-purpose single compressed file wrapper used in DS1, DSR, DS2, DS3, DeS, and BB.

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// An on-demand reader for BND3 containers.

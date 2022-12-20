@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SoulsFormats.Kuon
+namespace SoulsFormatsSAP.Kuon
 {
     /// <summary>
     /// Kuon's main archive ALL/ELL. Extension: .bnd

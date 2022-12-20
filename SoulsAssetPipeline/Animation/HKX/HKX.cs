@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Numerics;
 
-using SoulsFormats;
+using SoulsFormatsSAP;
 
 namespace SoulsAssetPipeline.Animation
 {

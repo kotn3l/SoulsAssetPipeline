@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SoulsFormats.ACE3
+namespace SoulsFormatsSAP.ACE3
 {
     /// <summary>
     /// A file container used in A.C.E. 3.

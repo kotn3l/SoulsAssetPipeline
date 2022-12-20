@@ -5,7 +5,7 @@ using System.IO;
 using System.Numerics;
 using System.Text;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// An extended writer for binary data supporting big and little endianness, value reservation, and arrays.

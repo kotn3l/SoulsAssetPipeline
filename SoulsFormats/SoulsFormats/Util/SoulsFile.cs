@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace SoulsFormats
+namespace SoulsFormatsSAP
 {
     /// <summary>
     /// A generic From file supporting transparent DCX reading and writing.
