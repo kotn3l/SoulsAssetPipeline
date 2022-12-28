@@ -25,4 +25,8 @@
     <WarningLevel>0</WarningLevel>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SoulsFormats\SoulsFormats\SoulsFormatsSAP.csproj" />
+  </ItemGroup>
+
 </Project>
