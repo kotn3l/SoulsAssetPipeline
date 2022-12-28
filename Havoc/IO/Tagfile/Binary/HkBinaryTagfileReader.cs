@@ -217,6 +217,20 @@ namespace Havoc.IO.Tagfile.Binary
                     throw new InvalidDataException( $"Unexpected signature: {section.Signature}" );
             }
         }
+        public static List<IHkObject> ReadAllObjects(Stream source, byte[] compendium = null, bool leaveOpen = false)
+        {
+            using (var reader = new HkBinaryTagfileReader(source, compendium, leaveOpen))
+            {
+                // stuff
+                reader.ReadCompendium();
+                reader.ReadRootSection();
+                // Console.WriteLine("FoundTypes: " + reader.mTypes.Count);
+
+                Debug.Temporary($"items: {reader.mItems.Count} {reader.mItems.Sum(x => x.Objects.Count)}");
+                Debug.Temporary($"items: {reader.mItems[1].Objects.Count}");
+                return reader.mItems.SelectMany(x => x.Objects).ToList();
+            }
+        }
 
         public static List<IHkObject> ReadAllObjects( Stream source, string compendium = "", bool leaveOpen = false )
         {
