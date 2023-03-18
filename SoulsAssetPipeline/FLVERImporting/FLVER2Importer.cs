@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Assimp;
-using SoulsFormatsSAP;
+using SoulsFormats;
 using NMatrix = System.Numerics.Matrix4x4;
 using NVector3 = System.Numerics.Vector3;
 using NQuaternion = System.Numerics.Quaternion;
@@ -68,7 +68,7 @@ namespace SoulsAssetPipeline.FLVERImporting
             public float SceneScale { get; set; } = 1.0f;
             public bool ConvertFromZUp { get; set; } = true;
 
-            public FLVER2.FLVERHeader FlverHeader { get; set; } = new FLVER2.FLVERHeader();
+            public FLVER2Header FlverHeader { get; set; } = new FLVER2Header();
 
             public SoulsGames Game { get; set; } = SoulsGames.None;
 
@@ -316,7 +316,7 @@ namespace SoulsAssetPipeline.FLVERImporting
                 flver.Bones.Add(new FLVER.Bone()
                 {
                     Name = mesh.Name,
-                    Translation = NVector3.Zero,
+                    Position = NVector3.Zero,
                     Rotation = NVector3.Zero,
                     Scale = NVector3.One,
                     BoundingBoxMin = NVector3.One * -1f,
@@ -386,7 +386,7 @@ namespace SoulsAssetPipeline.FLVERImporting
 
 
 
-                flverMesh.Vertices = new List<FLVER.Vertex>(mesh.VertexCount);
+                flverMesh.Vertices = new FLVER.Vertex[mesh.VertexCount];
 
                 for (int i = 0; i < mesh.VertexCount; i++)
                 {
@@ -423,7 +423,7 @@ namespace SoulsAssetPipeline.FLVERImporting
                         var finalTan = new System.Numerics.Vector4(
                             NVector3.Normalize(NVector3.TransformNormal(tan.ToNumerics(), vertTransMat)), 1);
 
-                        newVert.Tangents.Add(finalBitan);
+                        newVert.AddTangent(finalBitan);
                         //TODO: CHECK THIS AND SEE WTF IT EVEN IS SUPPOSED TO BE
                         newVert.Bitangent = finalTan;
                     }
@@ -431,7 +431,7 @@ namespace SoulsAssetPipeline.FLVERImporting
                     for (int j = 0; j < meshUVCount; j++)
                     {
                         var uv = mesh.TextureCoordinateChannels[j][i];
-                        newVert.UVs.Add(new NVector3(uv.X, 1 - uv.Y, uv.Z));
+                        newVert.AddUV(new NVector3(uv.X, 1 - uv.Y, uv.Z));
                     }
 
                     for (int j = 0; j < mesh.VertexColorChannelCount; j++)
@@ -446,7 +446,8 @@ namespace SoulsAssetPipeline.FLVERImporting
 
                     newVert.EnsureLayoutMembers(requiredVertexBufferMembers);
 
-                    flverMesh.Vertices.Add(newVert);
+                    throw new Exception();
+                    //flverMesh.Vertices.Add(newVert);
                 }
 
                 if (usesIndirectBones)
@@ -528,7 +529,7 @@ namespace SoulsAssetPipeline.FLVERImporting
                     }
                 }
 
-                for (int i = 0; i < flverMesh.Vertices.Count; i++)
+                for (int i = 0; i < flverMesh.Vertices.Length; i++)
                 {
                     
 
@@ -568,7 +569,8 @@ namespace SoulsAssetPipeline.FLVERImporting
                 //    flverFaceSet.Indices.AddRange(face.Indices);
                 //}
 
-                flverFaceSet.Indices.AddRange(mesh.GetIndices());
+                throw new Exception();
+                //flverFaceSet.Indices.AddRange(mesh.GetIndices());
 
                 flverMesh.FaceSets.Add(flverFaceSet);
                 GenerateLodAndMotionBlurFacesets(flverMesh);
@@ -603,7 +605,7 @@ namespace SoulsAssetPipeline.FLVERImporting
                     var match = settings.SkeletonTransformsOverride.FindIndex(bn => bn.Name == b.Name);
                     if (match >= 0)
                     {
-                        b.Translation = settings.SkeletonTransformsOverride[match].Translation;
+                        b.Position = settings.SkeletonTransformsOverride[match].Position;
                         b.Rotation = settings.SkeletonTransformsOverride[match].Rotation;
                         b.Scale = settings.SkeletonTransformsOverride[match].Scale;
                     }
@@ -714,10 +716,10 @@ namespace SoulsAssetPipeline.FLVERImporting
 
         private static void GenerateLodAndMotionBlurFacesets(FLVER2.Mesh mesh)
         {
-            var newFacesetsToAdd = new List<SoulsFormatsSAP.FLVER2.FaceSet>();
+            var newFacesetsToAdd = new List<SoulsFormats.FLVER2.FaceSet>();
             foreach (var faceset in mesh.FaceSets)
             {
-                var lod1 = new SoulsFormatsSAP.FLVER2.FaceSet()
+                var lod1 = new SoulsFormats.FLVER2.FaceSet()
                 {
                     CullBackfaces = faceset.CullBackfaces,
                     Flags = FLVER2.FaceSet.FSFlags.LodLevel1,

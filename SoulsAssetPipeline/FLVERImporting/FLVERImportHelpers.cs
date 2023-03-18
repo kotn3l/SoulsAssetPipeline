@@ -1,5 +1,5 @@
 ﻿using Assimp;
-using SoulsFormatsSAP;
+using SoulsFormats;
 using System;
 using System.Collections.Generic;
 using NMatrix = System.Numerics.Matrix4x4;
@@ -10,7 +10,7 @@ namespace SoulsAssetPipeline.FLVERImporting
 {
     public static class FLVERImportHelpers
     {
-        public static void UpdateBoundingBox(this FLVER2.FLVERHeader header, NVector3 vertexPos)
+        public static void UpdateBoundingBox(this FLVER2Header header, NVector3 vertexPos)
         {
             var minX = Math.Min(header.BoundingBoxMin.X, vertexPos.X);
             var minY = Math.Min(header.BoundingBoxMin.Y, vertexPos.Y);
@@ -65,7 +65,7 @@ namespace SoulsAssetPipeline.FLVERImporting
                 NMatrix.CreateRotationX(b.Rotation.X) *
                 NMatrix.CreateRotationZ(b.Rotation.Z) *
                 NMatrix.CreateRotationY(b.Rotation.Y) *
-                NMatrix.CreateTranslation(b.Translation);
+                NMatrix.CreateTranslation(b.Position);
         }
 
         public static FLVER.Bone GetParent(this FLVER.Bone b, List<FLVER.Bone> bones)
@@ -95,8 +95,8 @@ namespace SoulsAssetPipeline.FLVERImporting
             {
                 if (m.Key == FLVER.LayoutSemantic.Tangent)
                 {
-                    while (v.Tangents.Count < m.Value)
-                        v.Tangents.Add(v.Tangents.Count > 0 ? v.Tangents[0] : System.Numerics.Vector4.Zero);
+                    while (v.TangentCount < m.Value)
+                        v.AddTangent(v.TangentCount > 0 ? v.GetTangent(0) : System.Numerics.Vector4.Zero);
                 }
                 else if (m.Key == FLVER.LayoutSemantic.VertexColor)
                 {
@@ -105,8 +105,8 @@ namespace SoulsAssetPipeline.FLVERImporting
                 }
                 else if (m.Key == FLVER.LayoutSemantic.UV)
                 {
-                    while (v.UVs.Count <= m.Value)
-                        v.UVs.Add(v.UVs.Count > 0 ? v.UVs[0] : NVector3.Zero);
+                    while (v.UVCount <= m.Value)
+                        v.AddUV(v.UVCount > 0 ? v.GetUV(0) : NVector3.Zero);
                 }
             }
         }
@@ -284,7 +284,7 @@ namespace SoulsAssetPipeline.FLVERImporting
                     flverBone.Name = boneNode.Name;
                     flverBone.BoundingBoxMin = new NVector3(float.MaxValue, float.MaxValue, float.MaxValue);
                     flverBone.BoundingBoxMax = new NVector3(float.MinValue, float.MinValue, float.MinValue);
-                    flverBone.Translation = boneTrans.Translation * importScale;
+                    flverBone.Position = boneTrans.Translation * importScale;
                     flverBone.Rotation = boneTrans.Rotation;
                     flverBone.Scale = boneTrans.Scale;
 

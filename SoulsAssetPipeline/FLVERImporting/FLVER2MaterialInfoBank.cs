@@ -1,12 +1,12 @@
 ﻿using SoulsAssetPipeline.XmlStructs;
-using SoulsFormatsSAP;
+using SoulsFormats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-using static SoulsFormatsSAP.FLVER2;
+using static SoulsFormats.FLVER2;
 
 namespace SoulsAssetPipeline.FLVERImporting
 {
@@ -108,7 +108,7 @@ namespace SoulsAssetPipeline.FLVERImporting
                         }
 
 
-                        bufferLayout.Add(new FLVER.LayoutMember(memberType, memberSemantic, memberIndex, memberBufferIndex));
+                        bufferLayout.Add(new FLVER.LayoutMember(memberType, memberSemantic, memberIndex, (byte)memberBufferIndex));
                     }
                     Buffers.Add(bufferLayout);
                     bufferIndex++;

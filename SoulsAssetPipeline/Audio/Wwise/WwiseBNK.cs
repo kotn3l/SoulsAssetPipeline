@@ -1,4 +1,4 @@
-﻿using SoulsFormatsSAP;
+﻿using SoulsFormats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SoulsAssetPipeline.Audio.Wwise
 {
-    public class WwiseBNK : SoulsFormatsSAP.SoulsFile<WwiseBNK>, IDisposable
+    public class WwiseBNK : SoulsFormats.SoulsFile<WwiseBNK>, IDisposable
     {
         public object ThreadLockObject = new object();
 

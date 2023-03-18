@@ -1,10 +1,11 @@
 ﻿using SoulsAssetPipeline.Animation;
-using SoulsFormatsSAP;
+using SoulsFormats;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using HKX = SoulsAssetPipeline.Animation.HKX;
 
 namespace HKX2
 {

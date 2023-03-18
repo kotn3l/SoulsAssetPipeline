@@ -1,7 +1,7 @@
 ﻿using Havoc.IO.Tagfile.Binary;
 using Havoc.Objects;
 using Havoc.Reflection;
-using SoulsFormatsSAP;
+using SoulsFormats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
