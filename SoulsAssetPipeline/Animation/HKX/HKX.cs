@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Numerics;
-
 using SoulsFormats;
+using System.IO.MemoryMappedFiles;
+using DotNext.IO.MemoryMappedFiles;
 
 namespace SoulsAssetPipeline.Animation
 {
@@ -114,21 +115,20 @@ namespace SoulsAssetPipeline.Animation
 
         public static HKX Read(string path, HKXVariation variation, bool isDS1RAnimHotfix, bool deserializeObjects = true)
         {
-            using (FileStream stream = File.OpenRead(path))
-            {
-                BinaryReaderEx br = new BinaryReaderEx(false, stream);
-                HKX file = new HKX();
-                file.IsDS1RAnimHotfix = isDS1RAnimHotfix;
-                file.Variation = variation;
-                file.DeserializeObjects = deserializeObjects;
-                br = SFUtil.GetDecompressedBR(br, out DCX.Type fileCompression);
-                file.Compression = fileCompression;
-                file.Read(br);
-                return file;
-            }
+            using var f = MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+            using var accessor = f.CreateMemoryAccessor(0, 0, MemoryMappedFileAccess.Read);
+            BinaryReaderEx br = new BinaryReaderEx(false, accessor.Memory);
+            HKX file = new HKX();
+            file.IsDS1RAnimHotfix = isDS1RAnimHotfix;
+            file.Variation = variation;
+            file.DeserializeObjects = deserializeObjects;
+            br = SFUtil.GetDecompressedBR(br, out DCX.Type fileCompression);
+            file.Compression = fileCompression;
+            file.Read(br);
+            return file;
         }
 
-        public static HKX Read(byte[] data, HKXVariation variation, bool isDS1RAnimHotfix, bool deserializeObjects = true)
+        public static HKX Read(Memory<byte> data, HKXVariation variation, bool isDS1RAnimHotfix, bool deserializeObjects = true)
         {
             BinaryReaderEx br = new BinaryReaderEx(false, data);
             HKX file = new HKX();
@@ -146,7 +146,7 @@ namespace SoulsAssetPipeline.Animation
             return Read(path, HKXVariation.HKXDS3, isDS1RAnimHotfix, deserializeObjects);
         }
 
-        public static HKX Read(byte[] data, bool isDS1RAnimHotfix, bool deserializeObjects = true)
+        public static HKX Read(Memory<byte> data, bool isDS1RAnimHotfix, bool deserializeObjects = true)
         {
             return Read(data, HKXVariation.HKXDS3, isDS1RAnimHotfix, deserializeObjects);
         }

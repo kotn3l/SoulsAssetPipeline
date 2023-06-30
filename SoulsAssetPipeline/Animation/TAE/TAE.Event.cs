@@ -64,115 +64,109 @@ namespace SoulsAssetPipeline.Animation
                 }
 
                 internal ParameterContainer(long animID, int eventIndex,
-                    bool bigEndian, byte[] paramData, Template.EventTemplate template, bool suppressAssert = false)
+                    bool bigEndian, Memory<byte> paramData, Template.EventTemplate template, bool suppressAssert = false)
                 {
                     parameterValues = new Dictionary<string, object>();
                     Template = template;
-                    using (var memStream = new System.IO.MemoryStream(paramData))
+                    var br = new BinaryReaderEx(bigEndian, paramData);
+                    int i = 0;
+                    foreach (var paramKvp in Template)
                     {
-                        var br = new BinaryReaderEx(bigEndian, memStream);
-                        int i = 0;
-                        foreach (var paramKvp in Template)
+                        var p = paramKvp.Value;
+                        if (p.ValueToAssert != null)
                         {
-                            var p = paramKvp.Value;
-                            if (p.ValueToAssert != null)
+                            if (!suppressAssert)
                             {
-                                if (!suppressAssert)
-                                {
-                                    try
-                                    {
-                                        p.AssertValue(br);
-                                    }
-                                    catch (System.IO.InvalidDataException ex)
-                                    {
-                                        var txtField = p.Name != null ? $"'{p.Name}'" : $"{(i + 1)} of {Template.Count}";
-                                        var txtEventType = Template.Name != null ? $"'{Template.Name}'" : Template.ID.ToString();
-
-                                        throw new Exception($"Animation {animID}\nEvent[{eventIndex}] (Type: {txtEventType})" +
-                                                $"\n  -> Assert failed on field {txtField} (Type: {p.Type})", ex);
-                                    }
-                                }
-                                else
-                                {
-                                    // lol I'm sorry TK
-                                    p.ReadValue(br);
-                                }
-                            }
-                            else
-                            {
-
                                 try
                                 {
-                                    parameterValues.Add(p.GetKeyString(), p.ReadValue(br));
+                                    p.AssertValue(br);
                                 }
-                                catch (Exception ex)
+                                catch (System.IO.InvalidDataException ex)
                                 {
                                     var txtField = p.Name != null ? $"'{p.Name}'" : $"{(i + 1)} of {Template.Count}";
                                     var txtEventType = Template.Name != null ? $"'{Template.Name}'" : Template.ID.ToString();
 
                                     throw new Exception($"Animation {animID}\nEvent[{eventIndex}] (Type: {txtEventType})" +
-                                            $"\n  -> Failed to read value of field {txtField} (Type: {p.Type})", ex);
-                                }
-                            }
-                            i++;
-                        }
-                    }
-                }
-
-                internal ParameterContainer(bool bigEndian, byte[] paramData, Template.EventTemplate template, bool suppressAssert = false)
-                {
-                    parameterValues = new Dictionary<string, object>();
-                    Template = template;
-                    using (var memStream = new System.IO.MemoryStream(paramData))
-                    {
-                        var br = new BinaryReaderEx(bigEndian, memStream);
-                        int i = 0;
-                        foreach (var paramKvp in Template)
-                        {
-                            var p = paramKvp.Value;
-                            if (p.ValueToAssert != null)
-                            {
-                                if (!suppressAssert)
-                                {
-                                    try
-                                    {
-                                        p.AssertValue(br);
-                                    }
-                                    catch (System.IO.InvalidDataException ex)
-                                    {
-                                        var txtField = p.Name != null ? $"'{p.Name}'" : $"{(i + 1)} of {Template.Count}";
-                                        var txtEventType = Template.Name != null ? $"'{Template.Name}'" : Template.ID.ToString();
-
-                                        throw new Exception($"Event Type: {txtEventType}" +
-                                                $"\n  -> Assert failed on field {txtField}", ex);
-                                    }
-                                }
-                                else
-                                {
-                                    p.ReadValue(br);
+                                            $"\n  -> Assert failed on field {txtField} (Type: {p.Type})", ex);
                                 }
                             }
                             else
                             {
+                                // lol I'm sorry TK
+                                p.ReadValue(br);
+                            }
+                        }
+                        else
+                        {
+
+                            try
+                            {
+                                parameterValues.Add(p.GetKeyString(), p.ReadValue(br));
+                            }
+                            catch (Exception ex)
+                            {
+                                var txtField = p.Name != null ? $"'{p.Name}'" : $"{(i + 1)} of {Template.Count}";
+                                var txtEventType = Template.Name != null ? $"'{Template.Name}'" : Template.ID.ToString();
+
+                                throw new Exception($"Animation {animID}\nEvent[{eventIndex}] (Type: {txtEventType})" +
+                                        $"\n  -> Failed to read value of field {txtField} (Type: {p.Type})", ex);
+                            }
+                        }
+                        i++;
+                    }
+                }
+
+                internal ParameterContainer(bool bigEndian, Memory<byte> paramData, Template.EventTemplate template, bool suppressAssert = false)
+                {
+                    parameterValues = new Dictionary<string, object>();
+                    Template = template;
+                    var br = new BinaryReaderEx(bigEndian, paramData);
+                    int i = 0;
+                    foreach (var paramKvp in Template)
+                    {
+                        var p = paramKvp.Value;
+                        if (p.ValueToAssert != null)
+                        {
+                            if (!suppressAssert)
+                            {
                                 try
                                 {
-                                    parameterValues.Add(p.GetKeyString(), p.ReadValue(br));
+                                    p.AssertValue(br);
                                 }
-                                catch (Exception ex)
+                                catch (System.IO.InvalidDataException ex)
                                 {
                                     var txtField = p.Name != null ? $"'{p.Name}'" : $"{(i + 1)} of {Template.Count}";
                                     var txtEventType = Template.Name != null ? $"'{Template.Name}'" : Template.ID.ToString();
 
                                     throw new Exception($"Event Type: {txtEventType}" +
-                                            $"\n  -> Failed to read value of field {txtField} (Type: {p.Type})", ex);
+                                            $"\n  -> Assert failed on field {txtField}", ex);
                                 }
                             }
-                            i++;
+                            else
+                            {
+                                p.ReadValue(br);
+                            }
                         }
+                        else
+                        {
+                            try
+                            {
+                                parameterValues.Add(p.GetKeyString(), p.ReadValue(br));
+                            }
+                            catch (Exception ex)
+                            {
+                                var txtField = p.Name != null ? $"'{p.Name}'" : $"{(i + 1)} of {Template.Count}";
+                                var txtEventType = Template.Name != null ? $"'{Template.Name}'" : Template.ID.ToString();
+
+                                throw new Exception($"Event Type: {txtEventType}" +
+                                        $"\n  -> Failed to read value of field {txtField} (Type: {p.Type})", ex);
+                            }
+                        }
+                        i++;
                     }
                 }
 
-                internal byte[] AsBytes(bool bigEndian)
+                internal Memory<byte> AsBytes(bool bigEndian)
                 {
                     using (var memStream = new System.IO.MemoryStream())
                     {
@@ -233,7 +227,7 @@ namespace SoulsAssetPipeline.Animation
 
             public float MemeEndTime => EndTime >= EldenRingInfiniteLengthEventPlaceholder ? float.MaxValue : EndTime;
 
-            internal byte[] ParameterBytes;
+            internal Memory<byte> ParameterBytes;
 
             /// <summary>
             /// Gets the bytes of this event's parameters. This will
@@ -242,7 +236,7 @@ namespace SoulsAssetPipeline.Animation
             /// read directly from the file (which may
             /// include some padding).
             /// </summary>
-            public byte[] GetParameterBytes(bool bigEndian)
+            public Memory<byte> GetParameterBytes(bool bigEndian)
             {
                 if (Parameters != null)
                     CopyParametersToBytes(bigEndian);
@@ -253,7 +247,7 @@ namespace SoulsAssetPipeline.Animation
             /// Sets this event's parameter bytes to those specified. Updates the
             /// .Parameters template values as well if a template is applied.
             /// </summary>
-            public void SetParameterBytes(bool bigEndian, byte[] parameterBytes, bool lenientOnAssert = false)
+            public void SetParameterBytes(bool bigEndian, Memory<byte> parameterBytes, bool lenientOnAssert = false)
             {
                 if (parameterBytes.Length != ParameterBytes.Length)
                     throw new ArgumentException("Not the same amount of bytes as was originally here.");
@@ -272,7 +266,7 @@ namespace SoulsAssetPipeline.Animation
             {
                 var paramBytes = GetParameterBytes(bigEndian);
                 var otherParamBytes = otherEvent.GetParameterBytes(bigEndian);
-                return Type == otherEvent.Type && paramBytes.SequenceEqual(otherParamBytes);
+                return Type == otherEvent.Type && paramBytes.Span.SequenceEqual(otherParamBytes.Span);
             }
 
             public Event GetClone(bool bigEndian)
@@ -319,7 +313,7 @@ namespace SoulsAssetPipeline.Animation
                         CopyParametersToBytes(containingTae.BigEndian);
                     }
                     Type = eventType;
-                    Array.Resize(ref ParameterBytes, template[containingTae.EventBank][Type].GetAllParametersByteCount());
+                    ParameterBytes = ParameterBytes.ResizeMemory(template[containingTae.EventBank][Type].GetAllParametersByteCount());
                     Parameters = new ParameterContainer(animID, eventIndex,
                         containingTae.BigEndian, ParameterBytes, template[containingTae.EventBank][Type]);
 
@@ -332,7 +326,7 @@ namespace SoulsAssetPipeline.Animation
                 if (template[containingTae.EventBank].ContainsKey(eventType))
                 {
                     Type = eventType;
-                    Array.Resize(ref ParameterBytes, template[containingTae.EventBank][Type].GetAllParametersByteCount());
+                    ParameterBytes = ParameterBytes.ResizeMemory(template[containingTae.EventBank][Type].GetAllParametersByteCount());
 
                     var newParameters = new ParameterContainer(animID, eventIndex,
                         containingTae.BigEndian, ParameterBytes, template[containingTae.EventBank][Type],
@@ -364,7 +358,8 @@ namespace SoulsAssetPipeline.Animation
                 {
                     CopyParametersToBytes(isBigEndian);
                 }
-                Array.Resize(ref ParameterBytes, template.GetAllParametersByteCount());
+                ParameterBytes = ParameterBytes.ResizeMemory(template.GetAllParametersByteCount());
+
                 Parameters = new ParameterContainer(isBigEndian, ParameterBytes, template, suppressAssert: lenientOnAssert);
             }
 
@@ -401,7 +396,7 @@ namespace SoulsAssetPipeline.Animation
             /// <summary>
             /// Creates a new event with the specified start time, end time, type, unknown, and parameters.
             /// </summary>
-            public Event(float startTime, float endTime, int type, int unk04, byte[] parameters, bool isBigEndianParameters)
+            public Event(float startTime, float endTime, int type, int unk04, Memory<byte> parameters, bool isBigEndianParameters)
             {
                 StartTime = startTime;
                 EndTime = endTime;
@@ -456,7 +451,7 @@ namespace SoulsAssetPipeline.Animation
                 if (!isWeirdEventWithNoParamOffset)
                     bw.FillVarint($"EventDataParametersOffset{animIndex}:{eventIndex}", bw.Position);
 
-                bw.WriteBytes(ParameterBytes);
+                bw.WriteBytes(ParameterBytes.ToArray());
 
                 if (bw.VarintLong || format is TAEFormat.DES)
                     bw.Pad(0x10);
