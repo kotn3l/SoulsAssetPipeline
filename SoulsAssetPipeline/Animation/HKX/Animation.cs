@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using SoulsFormats;
 
 #pragma warning disable CS1591
@@ -101,6 +100,12 @@ namespace SoulsAssetPipeline.Animation
             public HKArray<Transform> Transforms;
             public HKArray<HKFloat> ReferenceFloats;
 
+            public HKASkeleton()
+            {
+                ParentIndices = new HKArray<HKShort>();
+                Bones = new HKArray<Bone>();
+                Transforms = new HKArray<Transform>();
+            }
 
             public override void Read(HKX hkx, HKXSection section, BinaryReaderEx br, HKXVariation variation)
             {

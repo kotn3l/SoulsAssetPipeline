@@ -8,6 +8,7 @@ using System.Numerics;
 using SoulsFormats;
 using System.IO.MemoryMappedFiles;
 using DotNext.IO.MemoryMappedFiles;
+using System.Collections;
 
 namespace SoulsAssetPipeline.Animation
 {
@@ -848,6 +849,11 @@ namespace SoulsAssetPipeline.Animation
         {
             public List<T> Elements;
 
+            public HKArrayData()
+            {
+                Elements = new List<T>();
+            }
+
             public override void Read(HKX hkx, HKXSection section, BinaryReaderEx br, HKXVariation variation)
             {
                 throw new Exception("Use the other read function to supply array size");
@@ -888,7 +894,7 @@ namespace SoulsAssetPipeline.Animation
         }
 
         // Havok's array structure found in nearly every class
-        public class HKArray<T> : IHKXSerializable where T : IHKXSerializable, new()
+        public class HKArray<T> : IHKXSerializable, IEnumerable<T> where T : IHKXSerializable, new()
         {
             private HKXObject SourceObject;
             private HKXLocalReference Data;
@@ -897,6 +903,13 @@ namespace SoulsAssetPipeline.Animation
             public uint Size;
             public uint Capacity;
             public byte Flags;
+            public HKArray()
+            {
+                Size = 0;
+                Capacity = 0;
+                Flags = 0;
+                MemeFakeArrayData = new HKArrayData<T>();
+            }
 
             public HKArray(HKArrayData<T> memeFakeArrayData)
             {
@@ -1002,6 +1015,36 @@ namespace SoulsAssetPipeline.Animation
                 Size = (uint)data.Count;
                 Capacity = (uint)data.Count;
                 ((HKArrayData<T>)Data.DestObject).Elements = data;
+            }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                return GetArrayData().Elements.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+            public int FindIndex(Predicate<T> match)
+            {
+                return GetArrayData().Elements.FindIndex(match);
+            }
+            public void Add(T data)
+            {
+                Size += 1;
+                Capacity += 1;
+                ((HKArrayData<T>)Data.DestObject).Elements.Add(data);
+            }
+
+            public bool Any()
+            {
+                return Size > 0 && GetArrayData().Elements.Count > 0;
+            }
+
+            public bool Any(Func<T, bool> predicate)
+            {
+                return GetArrayData().Elements.Any(predicate);
             }
 
             // Allow indexing as an array
@@ -1121,6 +1164,21 @@ namespace SoulsAssetPipeline.Animation
                     return null;
                 }
                 return ((HKCStringData)Data.DestObject).Data;
+            }
+
+            public void SetString(string name)
+            {
+                if (FakeMemeData != null)
+                    FakeMemeData = name;
+                if (Data != null)
+                {
+                    ((HKCStringData)Data.DestObject).Data = name;
+                }
+            }
+
+            public override string ToString()
+            {
+                return GetString();
             }
         }
 

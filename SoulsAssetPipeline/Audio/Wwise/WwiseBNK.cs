@@ -73,8 +73,6 @@ namespace SoulsAssetPipeline.Audio.Wwise
 
         public void Dispose()
         {
-            DATA?.binaryReader?.Stream?.Dispose();
-            HIRC?.objFetchBinaryReader?.Stream?.Dispose();
         }
     }
 }
