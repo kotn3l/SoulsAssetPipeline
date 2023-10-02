@@ -903,6 +903,19 @@ namespace SoulsAssetPipeline.Animation
             public uint Size;
             public uint Capacity;
             public byte Flags;
+
+            public HKArray<T> Clone()
+            {
+                var c = new HKArray<T>();
+                c.SourceObject = this.SourceObject; c.Data = this.Data;
+                c.Size = this.Size; c.Capacity = this.Capacity; c.Flags = this.Flags;
+                for (int i = 0; i < this.MemeFakeArrayData.Elements.Count; i++)
+                {
+                    c.MemeFakeArrayData.Elements.Add(this.MemeFakeArrayData.Elements[i]);
+                }
+                return c;
+            }
+
             public HKArray()
             {
                 Size = 0;
@@ -1034,7 +1047,8 @@ namespace SoulsAssetPipeline.Animation
             {
                 Size += 1;
                 Capacity += 1;
-                ((HKArrayData<T>)Data.DestObject).Elements.Add(data);
+                //((HKArrayData<T>)Data.DestObject).Elements.Add(data);
+                MemeFakeArrayData.Elements.Add(data);
             }
 
             public bool Any()
@@ -1179,6 +1193,11 @@ namespace SoulsAssetPipeline.Animation
             public override string ToString()
             {
                 return GetString();
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is HKCString && obj.ToString() == this.ToString();
             }
         }
 

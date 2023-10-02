@@ -107,6 +107,17 @@ namespace SoulsAssetPipeline.Animation
                 Transforms = new HKArray<Transform>();
             }
 
+            public HKASkeleton Clone()
+            {
+                var h = new HKASkeleton();
+                h.Name = Name;
+                h.ParentIndices = ParentIndices.Clone();
+                h.Bones = Bones.Clone();
+                h.Transforms = Transforms.Clone();
+                h.ReferenceFloats = ReferenceFloats.Clone();
+                return h;
+            }
+
             public override void Read(HKX hkx, HKXSection section, BinaryReaderEx br, HKXVariation variation)
             {
                 SectionOffset = (uint)br.Position;
@@ -133,6 +144,17 @@ namespace SoulsAssetPipeline.Animation
             public override void Write(HKX hkx, HKXSection section, BinaryWriterEx bw, uint sectionBaseOffset, HKXVariation variation)
             {
                 throw new NotImplementedException();
+            }
+
+            public void Add(HKASkeleton b, short index)
+            {
+                ParentIndices.Add(b.ParentIndices[index]);
+                Bones.Add(b.Bones[index]);
+                Transforms.Add(b.Transforms[index]);
+                if (b.ReferenceFloats.Size > index)
+                {
+                    ReferenceFloats.Add(b.ReferenceFloats[index]);
+                }
             }
         }
 
