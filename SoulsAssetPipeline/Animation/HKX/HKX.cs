@@ -909,9 +909,12 @@ namespace SoulsAssetPipeline.Animation
                 var c = new HKArray<T>();
                 c.SourceObject = this.SourceObject; c.Data = this.Data;
                 c.Size = this.Size; c.Capacity = this.Capacity; c.Flags = this.Flags;
-                for (int i = 0; i < this.MemeFakeArrayData.Elements.Count; i++)
+                if (this.MemeFakeArrayData != null && this.MemeFakeArrayData.Elements != null)
                 {
-                    c.MemeFakeArrayData.Elements.Add(this.MemeFakeArrayData.Elements[i]);
+                    for (int i = 0; i < this.MemeFakeArrayData.Elements.Count; i++)
+                    {
+                        c.MemeFakeArrayData.Elements.Add(this.MemeFakeArrayData.Elements[i]);
+                    }
                 }
                 return c;
             }
@@ -1177,7 +1180,16 @@ namespace SoulsAssetPipeline.Animation
                 {
                     return null;
                 }
-                return ((HKCStringData)Data.DestObject).Data;
+                string s = string.Empty;
+                try
+                {
+                    s = ((HKCStringData)Data.DestObject).Data;
+                }
+                catch (Exception)
+                {
+
+                }
+                return s;
             }
 
             public void SetString(string name)
