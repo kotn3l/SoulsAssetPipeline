@@ -1180,16 +1180,14 @@ namespace SoulsAssetPipeline.Animation
                 {
                     return null;
                 }
-                string s = string.Empty;
                 try
                 {
-                    s = ((HKCStringData)Data.DestObject).Data;
+                    return ((HKCStringData)Data.DestObject).Data;
                 }
                 catch (Exception)
                 {
-
+                    return null;
                 }
-                return s;
             }
 
             public void SetString(string name)
