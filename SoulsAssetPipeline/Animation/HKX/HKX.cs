@@ -1013,7 +1013,7 @@ namespace SoulsAssetPipeline.Animation
 
             public HKArrayData<T> GetArrayData()
             {
-                if (MemeFakeArrayData != null)
+                if (MemeFakeArrayData != null && MemeFakeArrayData.Elements.Count > 0)
                     return MemeFakeArrayData;
                 if (Data == null)
                 {
@@ -1301,6 +1301,10 @@ namespace SoulsAssetPipeline.Animation
             public HKVector4(Vector4 vec)
             {
                 Vector = vec;
+            }
+            public HKVector4(Quaternion q)
+            {
+                Vector = new Vector4(q.X, q.Y, q.Z, q.W);
             }
             public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
             {

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using SoulsFormats;
@@ -46,6 +48,53 @@ namespace SoulsAssetPipeline.Animation
             public HKVector4 Position;
             public HKVector4 Rotation;
             public HKVector4 Scale;
+
+            public Transform()
+            {
+
+            }
+            public Transform(Vector3 pos, Vector3 rot, Vector3 scale)
+            {
+                Position = new HKVector4(new Vector4(pos, 0));
+                {
+                    var cx = MathF.Cos(rot.X / 2);
+                    var cy = MathF.Cos(rot.Y / 2);
+                    var cz = MathF.Cos(rot.Z / 2);
+                    var sx = MathF.Sin(rot.X / 2);
+                    var sy = MathF.Sin(rot.Y / 2);
+                    var sz = MathF.Sin(rot.Z / 2);
+                    var q = new Quaternion();
+                    q.X = sx * cy * cz + cx * sy * sz;
+                    q.Y = cx * sy * cz + sx * cy * sz;
+                    q.Z = cx * cy * sz + sx * sy * cz;
+                    q.W = cx * cy * cz + sx * sy * sz;
+                    //return q;
+                    Matrix4x4 m1 = Matrix4x4.CreateRotationX(rot.X) *
+                        Matrix4x4.CreateRotationZ(rot.Z) * Matrix4x4.CreateRotationY(rot.Y);
+                    var qs = Quaternion.CreateFromRotationMatrix(m1);
+                    //return qs;
+
+                    cx = MathF.Cos(rot.X);
+                    cy = MathF.Cos(rot.Y);
+                    cz = MathF.Cos(rot.Z);
+                    sx = MathF.Sin(rot.X);
+                    sy = MathF.Sin(rot.Y);
+                    sz = MathF.Sin(rot.Z);
+                    Matrix4x4 m = Matrix4x4.Identity;
+                    m.M11 = cz * cy;
+                    m.M12 = sz;//-sz;
+                    m.M13 = -cz * sy;//cz * sy;
+                    m.M21 = sx * sy - sz * cx * cy;//sx * sy + cx * sz * cy;
+                    m.M22 = cx * cz;
+                    m.M23 = cx * sz * sy + cy * sx;//cx * sz * sy - cy * sx;
+                    m.M31 = cy * sx * sz + cx * sy;//cy * sx * sz - cx * sy;
+                    m.M32 = -cz * sx;//cz * sx;
+                    m.M33 = cx * cy - sx * sz * sy;//cx * cy + sx * sz * sy;
+                    var qm = Quaternion.CreateFromRotationMatrix(m);
+                    Rotation = new HKVector4(qm);
+                }
+                Scale = new HKVector4(new Vector4(scale, 0));
+            }
             public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
             {
                 Position = new HKVector4();
@@ -66,6 +115,16 @@ namespace SoulsAssetPipeline.Animation
         {
             public HKCString Name;
             public int LockTranslation;
+
+            public Bone()
+            {
+
+            }
+            public Bone(string name)
+            {
+                Name = new HKCString(name);
+                LockTranslation = 0;
+            }
 
             public override void Read(HKX hkx, HKXSection section, HKXObject source, BinaryReaderEx br, HKXVariation variation)
             {
