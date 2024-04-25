@@ -173,7 +173,7 @@ namespace SoulsAssetPipeline.Animation
                 h.ParentIndices = ParentIndices.Clone();
                 h.Bones = Bones.Clone();
                 h.Transforms = Transforms.Clone();
-                h.ReferenceFloats = ReferenceFloats.Clone();
+                h.ReferenceFloats = ReferenceFloats?.Clone();
                 return h;
             }
 
@@ -210,7 +210,7 @@ namespace SoulsAssetPipeline.Animation
                 ParentIndices.Add(b.ParentIndices[index]);
                 Bones.Add(b.Bones[index]);
                 Transforms.Add(b.Transforms[index]);
-                if (b.ReferenceFloats.Size > index)
+                if (b.ReferenceFloats != null && b.ReferenceFloats.Size > index)
                 {
                     ReferenceFloats.Add(b.ReferenceFloats[index]);
                 }

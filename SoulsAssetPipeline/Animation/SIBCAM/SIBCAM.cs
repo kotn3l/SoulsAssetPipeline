@@ -34,7 +34,7 @@ namespace SoulsAssetPipeline.Animation.SIBCAM
             br.BigEndian = false;
             br.VarintLong = false;
 
-            bool isBigEndian = br.AssertInt32(1, 0x1000000) != 1;
+            bool isBigEndian = br.AssertInt32([1, 0x1000000]) != 1;
 
             br.BigEndian = isBigEndian;
 

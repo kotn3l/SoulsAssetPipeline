@@ -179,13 +179,13 @@ namespace SoulsAssetPipeline.Animation
 
             br.AssertASCII("TAE ");
 
-            BigEndian = br.AssertByte(0, 1) == 1;
+            BigEndian = br.AssertByte([0, 1]) == 1;
             br.BigEndian = BigEndian;
 
             br.AssertByte(0);
             br.AssertByte(0);
 
-            bool is64Bit = br.AssertByte(0, 0xFF) == 0xFF;
+            bool is64Bit = br.AssertByte([0, 0xFF]) == 0xFF;
             br.VarintLong = is64Bit;
             bool isDESR = false;
             // Demon's Souls Remastered check.
@@ -201,7 +201,7 @@ namespace SoulsAssetPipeline.Animation
             // 0x1000B: DeS, DS1(R)
             // 0x1000C: DS2, DS2 SOTFS, BB, DS3
             // 0x1000D: SDT, ER
-            int version = br.AssertInt32(0x10000, 0x1000A, 0x1000B, 0x1000C, 0x1000D);
+            int version = br.AssertInt32([0x10000, 0x1000A, 0x1000B, 0x1000C, 0x1000D]);
 
             
             if (version == 0x1000B && !is64Bit)
@@ -277,10 +277,10 @@ namespace SoulsAssetPipeline.Animation
                     }
                     else
                     {
-                        var subFormat = br.AssertInt16(0, 1, 2);
+                        var subFormat = br.AssertInt16([0, 1, 2]);
                         if (subFormat == 0)
                             Format = TAEFormat.DES;
-                        var test = br.AssertInt16(0, 1);
+                        var test = br.AssertInt16([0, 1]);
                         if (test == 0)
                         {
                             HasErrorAndNeedsResave = true;

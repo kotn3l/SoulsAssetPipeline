@@ -506,7 +506,7 @@ namespace SoulsAssetPipeline.Animation
 
                     // Parameters will ALWAYS be right here otherwise it crashes iirc.
                     parametersOffset = br.GetNextPaddedOffsetAfterCurrentField(br.VarintSize, format is TAEFormat.DES ? 0x10 : 0);
-                    br.AssertVarint(parametersOffset, 0);
+                    br.AssertVarint([parametersOffset, 0]);
                     br.Position = parametersOffset;
                 }
                 br.StepOut();

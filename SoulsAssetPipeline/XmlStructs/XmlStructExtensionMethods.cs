@@ -207,7 +207,7 @@ namespace SoulsAssetPipeline.XmlStructs
         public static void AssertFXR1Garbage(this BinaryReaderEx br)
         {
             if (br.VarintLong)
-                br.AssertUInt32(0, 0xCDCDCDCD);
+                br.AssertUInt32([0, 0xCDCDCDCD]);
         }
 
         public static int GetFXR1Varint(this BinaryReaderEx br, long offset)
