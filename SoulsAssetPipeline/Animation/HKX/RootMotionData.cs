@@ -40,9 +40,9 @@ namespace SoulsAssetPipeline.Animation
         public Vector4 GetSampleClamped(float time)
         {
             if (Frames.Length == 1 || time <= 0)
-                return Frames[0];
+                return FirstFrame;
             else if (time >= Duration)
-                return Frames[Frames.Length - 1];
+                return LastFrame;
 
             float frame = time / (Duration / (Frames.Length - 1));
 

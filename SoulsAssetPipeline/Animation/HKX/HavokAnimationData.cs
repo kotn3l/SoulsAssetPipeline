@@ -181,7 +181,16 @@ namespace SoulsAssetPipeline.Animation
             if (block < 0)
                 block = 0;
 
-            frame = (enableLooping ? (frame % (FrameCount - 1)) : (Math.Min(frame, FrameCount))) % (NumFramesPerBlock - 1);
+            if (enableLooping)
+            {
+                frame %= FrameCount - 1;
+            }
+            else
+            {
+                frame = Math.Min(frame, FrameCount);
+            }
+
+            frame %= NumFramesPerBlock - 1;
 
             NewBlendableTransform result = NewBlendableTransform.Identity;
             var track = Tracks[block][transformIndex];
@@ -351,7 +360,7 @@ namespace SoulsAssetPipeline.Animation
 
 
 
-            float frameInBlock = (enableLooping ? (frame % (FrameCount - 1)) : (Math.Min(frame, FrameCount))) % (NumFramesPerBlock - 1);
+            //float frameInBlock = (enableLooping ? (frame % (FrameCount - 1)) : (Math.Min(frame, FrameCount))) % (NumFramesPerBlock - 1);
 
             NewBlendableTransform currentFrame = GetTransformOnSpecificBlockAndFrame(transformTrackIndex,
                     block: blockIndex, frame, enableLooping);

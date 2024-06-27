@@ -124,7 +124,8 @@ namespace SoulsAssetPipeline.Animation
                         }
 
                         void DoAnim(HkClass anim)
-                        {
+                        {   
+                            if (anim == null) return;
                             if (anim.Type.Name == "hkaSplineCompressedAnimation")
                             {
                                 HKASplineCompressedAnimation hkaSplineCompressedAnimation = new HKASplineCompressedAnimation();
@@ -382,6 +383,11 @@ namespace SoulsAssetPipeline.Animation
                         {
                             foreach (var bindingPtr in bindings.Value as IReadOnlyList<IHkObject>)
                             {
+                                if (bindingPtr.Value == null)
+                                {
+                                    continue;
+                                }
+
                                 var binding = bindingPtr.Value as HkClass;
                                 HKAAnimationBinding hkaAnimationBinding = new HKAAnimationBinding();
 
