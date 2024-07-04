@@ -106,6 +106,7 @@ namespace SoulsAssetPipeline.Animation
 
     public class HavokAnimationData_SplineCompressed : HavokAnimationData
     {
+        private HKX.HKASplineCompressedAnimation anim;
         public HavokAnimationData_SplineCompressed(string name, HKX.HKASplineCompressedAnimation anim)
            : base(name)
         {
@@ -126,6 +127,7 @@ namespace SoulsAssetPipeline.Animation
            HKX.HKADefaultAnimatedReferenceFrame refFrame, HKX.HKAAnimationBinding binding, HKX.HKASplineCompressedAnimation anim)
            : base(name, skeleton, refFrame, binding)
         {
+            this.anim = anim;
             Duration = anim.Duration;// Math.Max(anim.Duration, anim.FrameDuration * anim.FrameCount);
             FrameCount = anim.FrameCount;
 

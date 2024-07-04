@@ -23,7 +23,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
-
 using SoulsFormats;
 
 namespace SoulsAssetPipeline.Animation
@@ -104,6 +103,32 @@ namespace SoulsAssetPipeline.Animation
         {
             var floatbytes = BitConverter.GetBytes(src);
             return BitConverter.ToSingle(floatbytes, 0);
+        }
+
+        static Quaternion ReadQuatSTRAIGHT16(BinaryReaderEx br)
+        {
+            byte[] input = br.ReadBytes(2);
+            const int res = 7;
+            const float scale = 1f / 7f;
+
+            int[] quantized = new int[4];
+            quantized[0] = input[0] & 0x0F;
+            quantized[1] = input[0] >> 4;
+            quantized[2] = input[1] & 0x0F;
+            quantized[3] = input[1] >> 4;
+
+            // Set the vector real components
+            Quaternion result = new Quaternion(
+                (quantized[0] - res) * scale,
+                (quantized[1] - res) * scale,
+                (quantized[2] - res) * scale,
+                (quantized[3] - res) * scale
+            );
+
+            // Normalize the quaternion
+            result = Quaternion.Normalize(result);
+
+            return result;
         }
 
         static Quaternion ReadQuatPOLAR32(BinaryReaderEx br)
@@ -268,8 +293,9 @@ namespace SoulsAssetPipeline.Animation
                 case RotationQuantizationType.THREECOMP48:
                     return ReadQuatTHREECOMP48(br);
                 case RotationQuantizationType.THREECOMP24:
-                case RotationQuantizationType.STRAIGHT16:
                     throw new NotImplementedException();
+                case RotationQuantizationType.STRAIGHT16:
+                    return ReadQuatSTRAIGHT16(br);
                 case RotationQuantizationType.UNCOMPRESSED:
                     return new Quaternion(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
                 default:
@@ -278,25 +304,21 @@ namespace SoulsAssetPipeline.Animation
         }
 
         // Algorithm A2.1 The NURBS Book 2nd edition, page 68
-        static int FindKnotSpan(int degree, float value, int cPointsSize, List<byte> knots)
+        static int FindKnotSpan(int p, float u, int n, List<byte> U)
         {
-            if (value >= knots[cPointsSize])
-                return cPointsSize - 1;
+            if (u >= U[n + 1]) return n;
+            if (u <= U[0]) return p;
 
-            int low = degree;
-            int high = cPointsSize;
+            // Search
+            int low = p;
+            int high = n + 1;
             int mid = (low + high) / 2;
-
-            while (value < knots[mid] || value >= knots[mid + 1])
+            while (u < U[mid] || u >= U[mid + 1])
             {
-                if (value < knots[mid])
-                    high = mid;
-                else
-                    low = mid;
-
+                if (u < U[mid]) high = mid;
+                else low = mid;
                 mid = (low + high) / 2;
             }
-
             return mid;
         }
 
@@ -556,9 +578,9 @@ namespace SoulsAssetPipeline.Animation
                 var byteRotationTypes = (FlagOffset)br.ReadByte();
                 var byteScaleTypes = (FlagOffset)br.ReadByte();
 
-                PositionQuantizationType = (ScalarQuantizationType)(byteQuantizationTypes & 3);
-                RotationQuantizationType = (RotationQuantizationType)((byteQuantizationTypes >> 2) & 0xF);
-                ScaleQuantizationType = (ScalarQuantizationType)((byteQuantizationTypes >> 6) & 3);
+                PositionQuantizationType = (ScalarQuantizationType)((byteQuantizationTypes >> 0) & 0x03);
+                RotationQuantizationType = (RotationQuantizationType)((byteQuantizationTypes >> 2) & 0x0F);
+                ScaleQuantizationType = (ScalarQuantizationType)((byteQuantizationTypes >> 6) & 0x03);
 
                 foreach (var flagOffset in (FlagOffset[])Enum.GetValues(typeof(FlagOffset)))
                 {
