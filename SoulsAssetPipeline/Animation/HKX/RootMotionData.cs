@@ -14,7 +14,7 @@ namespace SoulsAssetPipeline.Animation
         public readonly Vector4[] Frames;
 
         public Vector4 FirstFrame => Frames[0];
-        public Vector4 LastFrame => Frames[Frames.Length - 1];
+        public Vector4 LastFrame => Frames[^1];
 
         public RootMotionData(HKX.HKADefaultAnimatedReferenceFrame refFrame) : this(refFrame.Up, refFrame.Forward, refFrame.Duration, refFrame.ReferenceFrameSamples?.GetArrayData()?.Elements?.Select(hkxVector => hkxVector.Vector)?.ToArray() ?? new Vector4[0])
         {

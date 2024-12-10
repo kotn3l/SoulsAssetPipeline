@@ -12,11 +12,11 @@ namespace SoulsAssetPipeline.Animation
 {
     public partial class HKX : SoulsFile<HKX>
     {
-        private static object _lock_GenFakeFromTagFile = new object();
+        //private static object _lock_GenFakeFromTagFile = new object();
         public static HKX GenFakeFromTagFile(byte[] tagFile, byte[] compendium = null)
         {
             HKX meme = new HKX();
-            lock (_lock_GenFakeFromTagFile)
+            //lock (_lock_GenFakeFromTagFile)
             {
                 IHkObject SelectFieldFromClass(IReadOnlyDictionary<HkField, IHkObject> havokClass, string fieldName)
                 {

@@ -15,7 +15,7 @@ namespace Havoc.IO.Tagfile.Binary.Types {
             foreach (var subSection in section.SubSections) {
                 reader.BaseStream.Seek(subSection.Position, SeekOrigin.Begin);
 
-                Debug.ReadProcess($"  Read Type section: {subSection.Signature}");
+                //Debug.ReadProcess($"  Read Type section: {subSection.Signature}");
                 switch (subSection.Signature) {
                     case "TPTR":
                         break;

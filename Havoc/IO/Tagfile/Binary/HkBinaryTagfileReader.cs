@@ -53,7 +53,7 @@ namespace Havoc.IO.Tagfile.Binary
         {
             foreach ( var subSection in section.SubSections )
             {
-                Debug.ReadProcess("Read section: " + subSection.Signature);
+                //Debug.ReadProcess("Read section: " + subSection.Signature);
                 switch ( subSection.Signature )
                 {
                     case "TCRF": {
