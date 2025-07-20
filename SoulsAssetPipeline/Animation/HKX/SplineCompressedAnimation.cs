@@ -24,6 +24,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
 using SoulsFormats;
+using Havoc.Objects;
+using static SoulsFormats.DRB;
+using HKX2;
+using System.Runtime.Intrinsics.X86;
+using System.Runtime.Intrinsics;
+using DotNext;
+using System.Collections;
+using System.Threading.Channels;
 
 namespace SoulsAssetPipeline.Animation
 {
@@ -58,7 +66,7 @@ namespace SoulsAssetPipeline.Animation
             UNCOMPRESSED = 5, //16 bytes long
         }
 
-        static int GetRotationAlign(RotationQuantizationType qt)
+        public static int GetRotationAlign(RotationQuantizationType qt)
         {
             switch (qt)
             {
@@ -72,7 +80,7 @@ namespace SoulsAssetPipeline.Animation
             }
         }
 
-        static int GetRotationByteCount(RotationQuantizationType qt)
+        public static int GetRotationByteCount(RotationQuantizationType qt)
         {
             switch (qt)
             {
@@ -86,7 +94,17 @@ namespace SoulsAssetPipeline.Animation
             }
         }
 
-        static float ReadQuantizedFloat(BinaryReaderEx bin, float min, float max, ScalarQuantizationType type)
+        public static int GetScaleSizeMap(ScalarQuantizationType st)
+        {
+            switch (st)
+            {
+                case ScalarQuantizationType.BITS8: return 1;
+                case ScalarQuantizationType.BITS16: return 2;
+                default: throw new NotImplementedException();
+            }
+        }
+
+        public static float ReadQuantizedFloat(BinaryReaderEx bin, float min, float max, ScalarQuantizationType type)
         {
             float ratio = -1;
             switch (type)
@@ -99,13 +117,19 @@ namespace SoulsAssetPipeline.Animation
         }
 
         // Because C# can't static cast an int to a float natively
-        static float CastToFloat(uint src)
+        public static float CastToFloat(uint src)
         {
             var floatbytes = BitConverter.GetBytes(src);
             return BitConverter.ToSingle(floatbytes, 0);
         }
 
-        static Quaternion ReadQuatSTRAIGHT16(BinaryReaderEx br)
+        public static int CastToInt(float src)
+        {
+            var floatbytes = BitConverter.GetBytes(src);
+            return BitConverter.ToInt32(floatbytes, 0);
+        }
+
+        public static Quaternion ReadQuatSTRAIGHT16(BinaryReaderEx br)
         {
             byte[] input = br.ReadBytes(2);
             const int res = 7;
@@ -130,8 +154,7 @@ namespace SoulsAssetPipeline.Animation
 
             return result;
         }
-
-        static Quaternion ReadQuatPOLAR32(BinaryReaderEx br)
+        public static Quaternion ReadQuatPOLAR32(BinaryReaderEx br)
         {
             const ulong rMask = (1 << 10) - 1;
             const float rFrac = 1.0f / rMask;
@@ -178,8 +201,7 @@ namespace SoulsAssetPipeline.Animation
 
             return retVal;
         }
-
-        static Quaternion ReadQuatTHREECOMP48(BinaryReaderEx br)
+        public static Quaternion ReadQuatTHREECOMP48(BinaryReaderEx br)
         {
             const ulong mask = (1 << 15) - 1;
             const float fractal = 0.000043161f;
@@ -225,15 +247,13 @@ namespace SoulsAssetPipeline.Animation
 
             return new Quaternion(retval[0], retval[1], retval[2], retval[3]);
         }
-
-        static ulong Read40BitValue(BinaryReaderEx br)
+        public static ulong Read40BitValue(BinaryReaderEx br)
         {
             byte[] bytes = br.ReadBytes(5);
             Array.Resize(ref bytes, 8);
             return BitConverter.ToUInt64(bytes, 0);
         }
-
-        static Quaternion ReadQuatTHREECOMP40(BinaryReaderEx br)
+        public static Quaternion ReadQuatTHREECOMP40(BinaryReaderEx br)
         {
             const ulong mask = (1 << 12) - 1;
             const ulong positiveMask = mask >> 1;
@@ -281,8 +301,7 @@ namespace SoulsAssetPipeline.Animation
             return finalQuat;
 
         }
-
-        static Quaternion ReadQuantizedQuaternion(BinaryReaderEx br, RotationQuantizationType type)
+        public static Quaternion ReadQuantizedQuaternion(BinaryReaderEx br, RotationQuantizationType type)
         {
             switch (type)
             {
@@ -304,7 +323,7 @@ namespace SoulsAssetPipeline.Animation
         }
 
         // Algorithm A2.1 The NURBS Book 2nd edition, page 68
-        static int FindKnotSpan(int p, float u, int n, List<byte> U)
+        public static int FindKnotSpan(int p, float u, int n, byte[] U)
         {
             if (u >= U[n + 1]) return n;
             if (u <= U[0]) return p;
@@ -322,15 +341,216 @@ namespace SoulsAssetPipeline.Animation
             return mid;
         }
 
-        //Basis_ITS1, GetPoint_NR1, TIME-EFFICIENT NURBS CURVE EVALUATION ALGORITHMS, pages 64 & 65
-        static float GetSinglePoint(int knotSpanIndex, int degree, float frame, List<byte> knots, List<float> cPoints)
+        public static T EvaluatePoint<T>(float u, int degree, byte[] knots, List<T> controlPoints, Func<T, T, float, T> lerp)
+        {
+            // Clamp u to the nearest integer
+            //u = (float)Math.Round(u);
+
+            int n = controlPoints.Count - 1; // Number of control points - 1
+            int span = FindKnotSpan(degree, u, n, knots); // Determine the knot span
+            double[] basisFunctions = BasisFunctions(span, u, degree, knots);
+
+            // Compute the point on the curve as a weighted sum of the control points
+            T result = default;
+            for (int i = 0; i <= degree; i++)
+            {
+                float weight = (float)basisFunctions[i];
+                result = Add(result, Multiply(controlPoints[span - degree + i], weight, lerp));
+            }
+
+            return result;
+        }
+
+        // Helper: Multiply control point by a weight
+        private static T Multiply<T>(T controlPoint, float weight, Func<T, T, float, T> lerp)
+        {
+            return lerp(default, controlPoint, weight); // Equivalent to controlPoint * weight
+        }
+
+        // Helper: Add two values of type T
+        private static T Add<T>(T a, T b)
+        {
+            dynamic da = a;
+            dynamic db = b;
+            return da + db;
+        }
+
+        private static double[] BasisFunctions(int span, float u, int degree, byte[] knots)
+        {
+            double[] N = new double[degree + 1];
+            double[] left = new double[degree + 1];
+            double[] right = new double[degree + 1];
+
+            N[0] = 1.0;
+
+            for (int j = 1; j <= degree; j++)
+            {
+                left[j] = u - knots[span + 1 - j];
+                right[j] = knots[span + j] - u;
+
+                double saved = 0.0;
+
+                for (int r = 0; r < j; r++)
+                {
+                    double temp = N[r] / (right[r + 1] + left[j - r]);
+                    N[r] = saved + right[r + 1] * temp;
+                    saved = left[j - r] * temp;
+                }
+
+                N[j] = saved;
+            }
+
+            return N;
+        }
+
+        private static unsafe Vector4 EvaluateSimple1(int knotSpanIndex, int degree, float frame, byte[] knots, List<Vector4> cPoints)
+        {
+            hkSingleFloat32[] U = new hkSingleFloat32[6];
+
+            var u = new hkSingleFloat32(frame);
+
+            hkSingleFloat32 left = u - U[0];
+            hkSingleFloat32 right = U[1] - u;
+
+            hkSingleFloat32 sdjk = new hkSingleFloat32();
+            UnrollfSetDiv.Apply(HkMathAccuracyMode.HK_ACC_FULL, ref sdjk, left, right + left);
+
+            float[] values = new float[4];
+            fixed (float* p = values)
+            {
+                // Store the Vector128<float> into the array
+                Sse.Store(p, sdjk.Value);
+            }
+            Vector4 hihi = new Vector4(values[0], values[1], values[2], values[3]);
+            var bminusa = cPoints[1] - cPoints[0];
+
+            return cPoints[0] + (bminusa * hihi);
+        }
+
+        private static unsafe Vector4 EvaluateSimple3(int knotSpanIndex, int degree, float frame, byte[] knots, List<Vector4> cPoints)
+        {
+            hkSingleFloat32[] U = new hkSingleFloat32[6];
+
+            var u = new hkSingleFloat32(frame);
+
+            hkSingleFloat32 left = u - U[0];
+            hkSingleFloat32 right = U[1] - u;
+
+            hkSingleFloat32 sdjk = new hkSingleFloat32();
+            UnrollfSetDiv.Apply(HkMathAccuracyMode.HK_ACC_FULL, ref sdjk, left, right + left);
+
+            float[] values = new float[4];
+            fixed (float* p = values)
+            {
+                // Store the Vector128<float> into the array
+                Sse.Store(p, sdjk.Value);
+            }
+            Vector4 hihi = new Vector4(values[0], values[1], values[2], values[3]);
+            var bminusa = cPoints[1] - cPoints[0];
+
+            return cPoints[0] + (bminusa * hihi);
+        }
+
+        public enum HkMathAccuracyMode
+        {
+            HK_ACC_23_BIT,
+            HK_ACC_12_BIT,
+            HK_ACC_FULL
+        }
+
+        public struct hkSingleFloat32
+        {
+            public Vector128<float> Value;
+            public hkSingleFloat32()
+            {
+                Value = Vector128<float>.Zero;
+            }
+            public hkSingleFloat32(Vector128<float> value)
+            {
+                Value = value;
+            }
+
+            public unsafe hkSingleFloat32(float x)
+            {
+                // Load the scalar value into the lowest element of a Vector128<float>
+                Vector128<float> fx = Sse.LoadScalarVector128(&x);
+
+                // Shuffle the vector to broadcast the loaded value to all elements
+                Value = Sse.Shuffle(fx, fx, 0);
+            }
+
+            public static hkSingleFloat32 operator *(hkSingleFloat32 a, hkSingleFloat32 b)
+            {
+                return new hkSingleFloat32(Sse.Multiply(a.Value, b.Value));
+            }
+
+            public static hkSingleFloat32 operator /(hkSingleFloat32 a, hkSingleFloat32 b)
+            {
+                return new hkSingleFloat32(Sse.Divide(a.Value, b.Value));
+            }
+
+            public static hkSingleFloat32 operator +(hkSingleFloat32 a, hkSingleFloat32 b)
+            {
+                return new hkSingleFloat32(Sse.Add(a.Value, b.Value));
+            }
+
+            public static hkSingleFloat32 operator -(hkSingleFloat32 a, hkSingleFloat32 b)
+            {
+                return new hkSingleFloat32(Sse.Subtract(a.Value, b.Value));
+            }
+        }
+
+        public static class HkMath
+        {
+            public static hkSingleFloat32 QuadReciprocal(hkSingleFloat32 r)
+            {
+                var two = Vector128.Create(2.0f);
+                Vector128<float> rb = Sse.Reciprocal(r.Value);
+                Vector128<float> rbr = Sse.Multiply(r.Value, rb);
+                Vector128<float> d = Sse.Subtract(two, rbr);
+                Vector128<float> result = Sse.Multiply(rb, d);
+                return new hkSingleFloat32(result);
+            }
+        }
+
+        public static class UnrollfSetDiv
+        {
+            public static void Apply(HkMathAccuracyMode accuracyMode, ref hkSingleFloat32 self, hkSingleFloat32 a, hkSingleFloat32 b)
+            {
+                if (!Sse.IsSupported)
+                    throw new PlatformNotSupportedException("SSE is not supported on this processor.");
+
+                switch (accuracyMode)
+                {
+                    case HkMathAccuracyMode.HK_ACC_23_BIT:
+                        self = a * HkMath.QuadReciprocal(b);
+                        break;
+                    case HkMathAccuracyMode.HK_ACC_12_BIT:
+                        self = new hkSingleFloat32(Sse.Multiply(a.Value, Sse.Reciprocal(b.Value)));
+                        break;
+                    default: // HK_ACC_FULL
+                        self = a / b;
+                        break;
+                }
+            }
+        }
+
+        public static unsafe Vector128<float> SetFromFloat(float x)
+        {
+            // Load the scalar value into the lowest element of a Vector128<float>
+            Vector128<float> fx = Sse.LoadScalarVector128(&x);
+
+            // Shuffle the vector to broadcast the loaded value to all elements
+            return Sse.Shuffle(fx, fx, 0);
+        }
+        private static float[] GetSinglePoint(int knotSpanIndex, int degree, float frame, byte[] knots)
         {
             float[] N = { 1, 0, 0, 0, 0 };
 
             for (int i = 1; i <= degree; i++)
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    
+
                     float A = (frame - knots[knotSpanIndex - j]) / (knots[knotSpanIndex + i - j] - knots[knotSpanIndex - j]);
                     // without multiplying A, model jitters slightly
                     float tmp = N[j] * A;
@@ -341,7 +561,16 @@ namespace SoulsAssetPipeline.Animation
                     N[j] = tmp;
                 }
 
+            return N;
+        }
+        //Basis_ITS1, GetPoint_NR1, TIME-EFFICIENT NURBS CURVE EVALUATION ALGORITHMS, pages 64 & 65
+        public static float GetSinglePoint(int knotSpanIndex, int degree, float frame, byte[] knots, List<float> cPoints)
+        {
+            var N = GetSinglePoint(knotSpanIndex, degree, frame, knots);
+
             float retVal = 0.0f;
+
+
 
             for (int i = 0; i <= degree; i++)
                 retVal += cPoints[knotSpanIndex - i] * N[i];
@@ -350,18 +579,9 @@ namespace SoulsAssetPipeline.Animation
         }
 
         //Basis_ITS1, GetPoint_NR1, TIME-EFFICIENT NURBS CURVE EVALUATION ALGORITHMS, pages 64 & 65
-        static Quaternion GetSinglePoint(int knotSpanIndex, int degree, float frame, List<byte> knots, List<Quaternion> cPoints)
+        public static Quaternion GetSinglePoint(int knotSpanIndex, int degree, float frame, byte[] knots, List<Quaternion> cPoints)
         {
-            float[] N = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-
-            for (int i = 1; i <= degree; i++)
-                for (int j = i - 1; j >= 0; j--)
-                {
-                    float A = (frame - knots[knotSpanIndex - j]) / (knots[knotSpanIndex + i - j] - knots[knotSpanIndex - j]);
-                    float tmp = N[j] * A;
-                    N[j + 1] += N[j] - tmp;
-                    N[j] = tmp;
-                }
+            var N = GetSinglePoint(knotSpanIndex, degree, frame, knots);
 
             Quaternion retVal = new Quaternion(Vector3.Zero, 0.0f);
 
@@ -371,35 +591,99 @@ namespace SoulsAssetPipeline.Animation
                     retVal += cPoints[knotSpanIndex - i] * N[i];
             }
 
-        
-
             return retVal;
         }
 
-        public class SplineChannel<T>
+        public class SplineChannel<T> : IEnumerable<T>
         {
-            public bool IsDynamic = true;
-            public List<T> Values = new List<T>();
+            public bool IsDynamic { get; private set; }
+            public List<T> Values { get; private set; }
+            public T? BoundsMin { get; private set; }
+            public T? BoundsMax { get; private set; }
+            public T this[int i]
+            {
+                get
+                {
+                    return Values[i];
+                }
+            }
+            public T[] ToArray() => Values.ToArray();
+            public int Count => Values.Count;
+            public SplineChannel() : this(true)
+            {
+            }
+            public SplineChannel(T min, T max) :this(true)
+            {
+                BoundsMin = min;
+                BoundsMax = max;
+            }
+            public SplineChannel(bool dyn)
+            {
+                IsDynamic = dyn;
+                Values = new List<T>();
+            }
+            public SplineChannel(bool dyn, params T[] values)
+            {
+                IsDynamic = dyn;
+                Values = new List<T>(values);
+            }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                return Values.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
         }
 
-        public class SplineTrackQuaternion
+        public class SplineChannelFloat : SplineChannel<float>
         {
-            public SplineChannel<Quaternion> Channel;
-            public List<byte> Knots = new List<byte>();
-            public byte Degree;
-
-            internal SplineTrackQuaternion(BinaryReaderEx br, RotationQuantizationType quantizationType)
+            public SplineChannelFloat(float min, float max) : base(min, max)
             {
-                long debug_StartOfThisSplineTrack = br.Position;
+                if (min > max)
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+        }
 
-                short numItems = br.ReadInt16();
+        public abstract class SplineTrack
+        {
+            public byte[] Knots {  get; private set; }
+            protected readonly long debug_StartOfThisSplineTrack;
+            public readonly byte Degree;
+            protected readonly short numItems;
+
+            protected SplineTrack(BinaryReaderEx br)
+            {
+                debug_StartOfThisSplineTrack = br.Position;
+                
+
+                numItems = br.ReadInt16();
                 Degree = br.ReadByte();
                 int knotCount = numItems + Degree + 2;
+                int m = numItems + Degree + 1;
+                Knots = new byte[knotCount];
                 for (int i = 0; i < knotCount; i++)
                 {
-                    Knots.Add(br.ReadByte());
+                    Knots[i] = br.ReadByte();
                 }
+            }
+            private SplineTrack()
+            {
+                    
+            }
+        }
 
+        public class SplineTrackQuaternion : SplineTrack
+        {
+            public SplineChannel<Quaternion> Channel { get; private set; }
+
+            internal SplineTrackQuaternion(BinaryReaderEx br, RotationQuantizationType quantizationType) : base(br)
+            {
                 br.Pad(GetRotationAlign(quantizationType));
 
                 Channel = new SplineChannel<Quaternion>();
@@ -423,103 +707,79 @@ namespace SoulsAssetPipeline.Animation
             public Quaternion GetValue(float frame)
             {
                 int knotspan = FindKnotSpan(Degree, frame, Channel.Values.Count, Knots);
+
+                return Quaternion.Zero + EvaluatePoint(frame, Degree, Knots, Channel.Values, Quaternion.Slerp);
+
                 return GetSinglePoint(knotspan, Degree, frame, Knots, Channel.Values);
+            }
+
+            public void Add(SplineTrackQuaternion track)
+            {
+                if (track.Channel != null)
+                {
+                    Channel?.Values.AddRange(track.Channel.Values);
+                }
             }
         }
 
-        public class SplineTrackVector3
+        public class SplineTrackVector3 : SplineTrack
         {
-            public SplineChannel<float> ChannelX;
-            public SplineChannel<float> ChannelY;
-            public SplineChannel<float> ChannelZ;
-            public List<byte> Knots = new List<byte>();
-            public byte Degree;
+            public SplineChannel<float> ChannelX { get; private set; }
+            public SplineChannel<float> ChannelY { get; private set; }
+            public SplineChannel<float> ChannelZ { get; private set; }
+            //public SplineChannel<Vector4> ChannelAll { get; private set; }
 
-            internal SplineTrackVector3(BinaryReaderEx br, List<FlagOffset> channelTypes, ScalarQuantizationType quantizationType, bool isPosition)
+            public int Count()
             {
-                long debug_StartOfThisSplineTrack = br.Position;
+                return Math.Max(ChannelX == null ? 0 : ChannelX.Count, Math.Max(ChannelY == null ? 0 : ChannelY.Count, ChannelZ == null ? 0 : ChannelZ.Count));
+            }
 
-                short numItems = br.ReadInt16();
-                Degree = br.ReadByte();
-                int knotCount = numItems + Degree + 2;
-                for (int i = 0; i < knotCount; i++)
-                {
-                    Knots.Add(br.ReadByte());
-                }
-
+            internal SplineTrackVector3(BinaryReaderEx br, HashSet<FlagOffset> channelTypes, ScalarQuantizationType quantizationType) : base(br)
+            {
                 br.Pad(4);
-
-                float BoundsXMin = 0;
-                float BoundsXMax = 0;
-                float BoundsYMin = 0;
-                float BoundsYMax = 0;
-                float BoundsZMin = 0;
-                float BoundsZMax = 0;
-
-                ChannelX = new SplineChannel<float>();
-                ChannelY = new SplineChannel<float>();
-                ChannelZ = new SplineChannel<float>();
-
+                //ChannelAll = new SplineChannel<Vector4>();
                 if (channelTypes.Contains(FlagOffset.SplineX))
                 {
-                    BoundsXMin = br.ReadSingle();
-                    BoundsXMax = br.ReadSingle();
+                    ChannelX = new SplineChannelFloat(br.ReadSingle(), br.ReadSingle());
                 }
                 else if (channelTypes.Contains(FlagOffset.StaticX))
                 {
-                    ChannelX.Values = new List<float> { br.ReadSingle() };
-                    ChannelX.IsDynamic = false;
-                }
-                else
-                {
-                    ChannelX = null;
+                    ChannelX = new SplineChannel<float>(false, br.ReadSingle());
                 }
 
                 if (channelTypes.Contains(FlagOffset.SplineY))
                 {
-                    BoundsYMin = br.ReadSingle();
-                    BoundsYMax = br.ReadSingle();
+                    ChannelY = new SplineChannelFloat(br.ReadSingle(), br.ReadSingle());
                 }
                 else if (channelTypes.Contains(FlagOffset.StaticY))
                 {
-                    ChannelY.Values = new List<float> { br.ReadSingle() };
-                    ChannelY.IsDynamic = false;
-                }
-                else
-                {
-                    ChannelY = null;
+                    ChannelY = new SplineChannel<float>(false, br.ReadSingle());
                 }
 
                 if (channelTypes.Contains(FlagOffset.SplineZ))
                 {
-                    BoundsZMin = br.ReadSingle();
-                    BoundsZMax = br.ReadSingle();
+                    ChannelZ = new SplineChannelFloat(br.ReadSingle(), br.ReadSingle());
                 }
                 else if (channelTypes.Contains(FlagOffset.StaticZ))
                 {
-                    ChannelZ.Values = new List<float> { br.ReadSingle() };
-                    ChannelZ.IsDynamic = false;
-                }
-                else
-                {
-                    ChannelZ = null;
+                    ChannelZ = new SplineChannel<float>(false, br.ReadSingle());
                 }
 
                 for (int i = 0; i <= numItems; i++)
                 {
                     if (channelTypes.Contains(FlagOffset.SplineX))
                     {
-                        ChannelX.Values.Add(ReadQuantizedFloat(br, BoundsXMin, BoundsXMax, quantizationType));
+                        ChannelX.Values.Add(ReadQuantizedFloat(br, ChannelX.BoundsMin, ChannelX.BoundsMax, quantizationType));
                     }
 
                     if (channelTypes.Contains(FlagOffset.SplineY))
                     {
-                        ChannelY.Values.Add(ReadQuantizedFloat(br, BoundsYMin, BoundsYMax, quantizationType));
+                        ChannelY.Values.Add(ReadQuantizedFloat(br, ChannelY.BoundsMin, ChannelY.BoundsMax, quantizationType));
                     }
 
                     if (channelTypes.Contains(FlagOffset.SplineZ))
                     {
-                        ChannelZ.Values.Add(ReadQuantizedFloat(br, BoundsZMin, BoundsZMax, quantizationType));
+                        ChannelZ.Values.Add(ReadQuantizedFloat(br, ChannelZ.BoundsMin, ChannelZ.BoundsMax, quantizationType));
                     }
                 }
             }
@@ -531,6 +791,10 @@ namespace SoulsAssetPipeline.Animation
 
                 if (ChannelX.Values.Count == 1)
                     return ChannelX.Values[0];
+
+
+                return EvaluatePoint(frame, Degree, Knots, ChannelX.Values, (a, b, t) => a + (b - a) * t);
+
                 int knotspan = FindKnotSpan(Degree, frame, ChannelX.Values.Count, Knots);
                 return GetSinglePoint(knotspan, Degree, frame, Knots, ChannelX.Values);
             }
@@ -542,6 +806,9 @@ namespace SoulsAssetPipeline.Animation
 
                 if (ChannelY.Values.Count == 1)
                     return ChannelY.Values[0];
+
+                return EvaluatePoint(frame, Degree, Knots, ChannelY.Values, (a, b, t) => a + (b - a) * t);
+
                 int knotspan = FindKnotSpan(Degree, frame, ChannelY.Values.Count, Knots);
                 return GetSinglePoint(knotspan, Degree, frame, Knots, ChannelY.Values);
             }
@@ -553,25 +820,44 @@ namespace SoulsAssetPipeline.Animation
 
                 if (ChannelZ.Values.Count == 1)
                     return ChannelZ.Values[0];
+
+                return EvaluatePoint(frame, Degree, Knots, ChannelZ.Values, (a, b, t) => a + (b - a) * t);
+
                 int knotspan = FindKnotSpan(Degree, frame, ChannelZ.Values.Count, Knots);
                 return GetSinglePoint(knotspan, Degree, frame, Knots, ChannelZ.Values);
+            }
+
+            public void Add(SplineTrackVector3 track)
+            {
+                if (track.ChannelX != null)
+                {
+                    ChannelX?.Values.AddRange(track.ChannelX.Values);
+                }
+                if (track.ChannelY != null)
+                {
+                    ChannelY?.Values.AddRange(track.ChannelY.Values);
+                }
+                if (track.ChannelZ != null)
+                {
+                    ChannelZ?.Values.AddRange(track.ChannelZ.Values);
+                }
             }
         }
 
         public class TransformMask
         {
-            public ScalarQuantizationType PositionQuantizationType;
-            public RotationQuantizationType RotationQuantizationType;
-            public ScalarQuantizationType ScaleQuantizationType;
-            public List<FlagOffset> PositionTypes;
-            public List<FlagOffset> RotationTypes;
-            public List<FlagOffset> ScaleTypes;
+            public ScalarQuantizationType PositionQuantizationType { get; set; }
+            public RotationQuantizationType RotationQuantizationType { get; set; }
+            public ScalarQuantizationType ScaleQuantizationType { get; set; }
+            public HashSet<FlagOffset> PositionTypes { get; set; }
+            public HashSet<FlagOffset> RotationTypes { get; set; }
+            public HashSet<FlagOffset> ScaleTypes { get; set; }
 
             internal TransformMask(BinaryReaderEx br)
             {
-                PositionTypes = new List<FlagOffset>();
-                RotationTypes = new List<FlagOffset>();
-                ScaleTypes = new List<FlagOffset>();
+                PositionTypes = new HashSet<FlagOffset>();
+                RotationTypes = new HashSet<FlagOffset>();
+                ScaleTypes = new HashSet<FlagOffset>();
 
                 var byteQuantizationTypes = br.ReadByte();
                 var bytePositionTypes = (FlagOffset)br.ReadByte();
@@ -582,7 +868,7 @@ namespace SoulsAssetPipeline.Animation
                 RotationQuantizationType = (RotationQuantizationType)((byteQuantizationTypes >> 2) & 0x0F);
                 ScaleQuantizationType = (ScalarQuantizationType)((byteQuantizationTypes >> 6) & 0x03);
 
-                foreach (var flagOffset in (FlagOffset[])Enum.GetValues(typeof(FlagOffset)))
+                foreach (var flagOffset in (FlagOffset[])System.Enum.GetValues(typeof(FlagOffset)))
                 {
                     if ((bytePositionTypes & flagOffset) != 0)
                         PositionTypes.Add(flagOffset);
@@ -594,269 +880,193 @@ namespace SoulsAssetPipeline.Animation
                         ScaleTypes.Add(flagOffset);
                 }
             }
+
+            public override bool Equals(object obj)
+            {
+                return obj is TransformMask mask &&
+                       PositionQuantizationType == mask.PositionQuantizationType &&
+                       RotationQuantizationType == mask.RotationQuantizationType &&
+                       ScaleQuantizationType == mask.ScaleQuantizationType &&
+                       PositionTypes.SequenceEqual(mask.PositionTypes) &&
+                       RotationTypes.SequenceEqual(mask.RotationTypes) &&
+                       ScaleTypes.SequenceEqual(mask.ScaleTypes);
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(PositionQuantizationType, RotationQuantizationType, ScaleQuantizationType, PositionTypes, RotationTypes, ScaleTypes);
+            }
         }
 
         public class TransformTrack
         {
-            public TransformMask Mask;
+            public readonly TransformMask Mask;
 
-            public bool HasSplinePosition;
-            public bool HasSplineRotation;
-            public bool HasSplineScale;
+            public readonly bool HasSplinePosition;
+            public readonly bool HasSplineRotation;
+            public readonly bool HasSplineScale;
+            public readonly bool HasStaticRotation;
 
-            public bool HasStaticRotation;
+            public Vector3 StaticPosition;
+            public Quaternion StaticRotation;
+            public Vector3 StaticScale;
+            public SplineTrackVector3 SplinePosition;
+            public SplineTrackQuaternion SplineRotation;
+            public SplineTrackVector3 SplineScale;
 
-            public Vector3 StaticPosition = Vector3.Zero;
-            public Quaternion StaticRotation = Quaternion.Identity;
-            public Vector3 StaticScale = Vector3.One;
-            public SplineTrackVector3 SplinePosition = null;
-            public SplineTrackQuaternion SplineRotation = null;
-            public SplineTrackVector3 SplineScale = null;
+            private readonly BinaryReaderEx _br;
+
+            public TransformTrack(BinaryReaderEx br)
+            {
+                _br = br;
+
+                StaticPosition = Vector3.Zero;
+                StaticRotation = Quaternion.Identity;
+                StaticScale = Vector3.One;
+
+                Mask = new TransformMask(br);
+
+                HasSplinePosition = Mask.PositionTypes.Contains(FlagOffset.SplineX)
+                                 || Mask.PositionTypes.Contains(FlagOffset.SplineY)
+                                 || Mask.PositionTypes.Contains(FlagOffset.SplineZ);
+
+                HasSplineRotation = Mask.RotationTypes.Contains(FlagOffset.SplineX)
+                                 || Mask.RotationTypes.Contains(FlagOffset.SplineY)
+                                 || Mask.RotationTypes.Contains(FlagOffset.SplineZ)
+                                 || Mask.RotationTypes.Contains(FlagOffset.SplineW);
+
+                HasStaticRotation = Mask.RotationTypes.Contains(FlagOffset.StaticX)
+                                 || Mask.RotationTypes.Contains(FlagOffset.StaticY)
+                                 || Mask.RotationTypes.Contains(FlagOffset.StaticZ)
+                                 || Mask.RotationTypes.Contains(FlagOffset.StaticW);
+
+                HasSplineScale = Mask.ScaleTypes.Contains(FlagOffset.SplineX)
+                              || Mask.ScaleTypes.Contains(FlagOffset.SplineY)
+                              || Mask.ScaleTypes.Contains(FlagOffset.SplineZ);
+            }
+
+            public void ReadValues()
+            {
+                if (HasSplinePosition)
+                {
+                    SplinePosition = new SplineTrackVector3(_br, Mask.PositionTypes, Mask.PositionQuantizationType);
+                }
+                else
+                {
+                    if (Mask.PositionTypes.Contains(FlagOffset.StaticX))
+                    {
+                        StaticPosition.X = _br.ReadSingle();
+                    }
+
+                    if (Mask.PositionTypes.Contains(FlagOffset.StaticY))
+                    {
+                        StaticPosition.Y = _br.ReadSingle();
+                    }
+
+                    if (Mask.PositionTypes.Contains(FlagOffset.StaticZ))
+                    {
+                        StaticPosition.Z = _br.ReadSingle();
+                    }
+                }
+
+                _br.Pad(4);
+
+
+                if (HasSplineRotation)
+                {
+                    SplineRotation = new SplineTrackQuaternion(_br, Mask.RotationQuantizationType);
+                }
+                else
+                {
+                    if (HasStaticRotation)
+                    {
+                        _br.Pad(SplineCompressedAnimation.GetRotationAlign(Mask.RotationQuantizationType));
+                        StaticRotation = SplineCompressedAnimation.ReadQuantizedQuaternion(_br, Mask.RotationQuantizationType); //_br.ReadBytes(GetRotationByteCount(Mask.RotationQuantizationType));
+                    }
+                }
+
+                _br.Pad(4);
+
+                if (HasSplineScale)
+                {
+                    SplineScale = new SplineTrackVector3(_br, Mask.ScaleTypes, Mask.ScaleQuantizationType);
+                }
+                else
+                {
+                    if (Mask.ScaleTypes.Contains(FlagOffset.StaticX))
+                    {
+                        StaticScale.X = _br.ReadSingle();
+                    }
+
+                    if (Mask.ScaleTypes.Contains(FlagOffset.StaticY))
+                    {
+                        StaticScale.Y = _br.ReadSingle();
+                    }
+
+                    if (Mask.ScaleTypes.Contains(FlagOffset.StaticZ))
+                    {
+                        StaticScale.Z = _br.ReadSingle();
+                    }
+                }
+
+                _br.Pad(4);
+            }
+
+            public bool AddTrack(TransformTrack track)
+            {
+                if (!Mask.Equals(track.Mask))
+                {
+                    return false;
+                }
+
+                SplinePosition.Add(track.SplinePosition);
+                SplineScale.Add(track.SplineScale);
+                SplineRotation.Add(track.SplineRotation);
+                return true;
+            }
         }
 
 
-        public static List<NewBlendableTransform> ReadSplCmpAnimBytesAndSampleToUncomp(
-            byte[] animationData, int numTransformTracks, int numBlocks, int numFrames, int numFramesPerBlock)
+        public int SaturateInt32(float f)
         {
-            var tracks = ReadSplineCompressedAnimByteBlock(
-                isBigEndian: false, animationData, numTransformTracks, numBlocks);
+            int output;
+            int intValue = SplineCompressedAnimation.CastToInt(f);
 
-            NewBlendableTransform GetTransformOnSpecificBlockAndFrame(int transformIndex, int block, float frame)
+            if (intValue > int.MaxValue)
             {
-                frame = (frame % numFrames) % numFramesPerBlock;
-
-                NewBlendableTransform result = NewBlendableTransform.Identity;
-                var track = tracks[block][transformIndex];
-
-                //result.Scale.X = track.SplineScale?.ChannelX == null
-                //    ? (IsAdditiveBlend ? 1 : track.StaticScale.X) : track.SplineScale.GetValueX(frame);
-                //result.Scale.Y = track.SplineScale?.ChannelY == null
-                //    ? (IsAdditiveBlend ? 1 : track.StaticScale.Y) : track.SplineScale.GetValueY(frame);
-                //result.Scale.Z = track.SplineScale?.ChannelZ == null
-                //    ? (IsAdditiveBlend ? 1 : track.StaticScale.Z) : track.SplineScale.GetValueZ(frame);
-
-                if (track.SplineScale != null)
-                {
-                    result.Scale.X = track.SplineScale.GetValueX(frame) ?? 1;
-
-                    result.Scale.Y = track.SplineScale.GetValueY(frame) ?? 1;
-
-                    result.Scale.Z = track.SplineScale.GetValueZ(frame) ?? 1;
-                }
-                else
-                {
-                    if (track.Mask.ScaleTypes.Contains(SplineCompressedAnimation.FlagOffset.StaticX))
-                        result.Scale.X = track.StaticScale.X;
-                    else
-                        result.Scale.X = 1;
-
-                    if (track.Mask.ScaleTypes.Contains(SplineCompressedAnimation.FlagOffset.StaticY))
-                        result.Scale.Y = track.StaticScale.Y;
-                    else
-                        result.Scale.Y = 1;
-
-                    if (track.Mask.ScaleTypes.Contains(SplineCompressedAnimation.FlagOffset.StaticZ))
-                        result.Scale.Z = track.StaticScale.Z;
-                    else
-                        result.Scale.Z = 1;
-                }
-
-                if (track.SplineRotation != null)//track.HasSplineRotation)
-                {
-                    result.Rotation = track.SplineRotation.GetValue(frame);
-                }
-                else if (track.HasStaticRotation)
-                {
-                    // We actually need static rotation or Gael hands become unbent among others
-                    result.Rotation = track.StaticRotation;
-                }
-                else
-                {
-                    //result.Rotation = IsAdditiveBlend ? Quaternion.Identity : new Quaternion(
-                    //    skeleTransform.Rotation.Vector.X,
-                    //    skeleTransform.Rotation.Vector.Y,
-                    //    skeleTransform.Rotation.Vector.Z,
-                    //    skeleTransform.Rotation.Vector.W);
-                }
-
-                if (track.SplinePosition != null)
-                {
-                    result.Translation.X = track.SplinePosition.GetValueX(frame) ?? 0;
-
-                    result.Translation.Y = track.SplinePosition.GetValueY(frame) ?? 0;
-
-                    result.Translation.Z = track.SplinePosition.GetValueZ(frame) ?? 0;
-                }
-                else
-                {
-                    if (track.Mask.PositionTypes.Contains(FlagOffset.StaticX))
-                        result.Translation.X = track.StaticPosition.X;
-                    else
-                        result.Translation.X = 0;
-
-                    if (track.Mask.PositionTypes.Contains(FlagOffset.StaticY))
-                        result.Translation.Y = track.StaticPosition.Y;
-                    else
-                        result.Translation.Y = 0;
-
-                    if (track.Mask.PositionTypes.Contains(FlagOffset.StaticZ))
-                        result.Translation.Z = track.StaticPosition.Z;
-                    else
-                        result.Translation.Z = 0;
-                }
-
-                return result;
+                output = int.MaxValue;
+            }
+            else if (intValue < int.MinValue)
+            {
+                output = int.MinValue;
+            }
+            else
+            {
+                output = intValue;
             }
 
-            List<NewBlendableTransform> resultList = new List<NewBlendableTransform>();
-
-            for (int f = 0; f < numFrames; f++)
-            {
-                float frame = (f % numFrames) % numFramesPerBlock;
-
-                int currentBlock = (int)((f % numFrames) / numFramesPerBlock);
-
-                for (int t = 0; t < numTransformTracks; t++)
-                {
-                    if (frame >= numFrames - 1)
-                    {
-                        NewBlendableTransform currentFrame = GetTransformOnSpecificBlockAndFrame(t,
-                            block: currentBlock, frame: (float)Math.Floor(frame));
-                        NewBlendableTransform nextFrame = GetTransformOnSpecificBlockAndFrame(t, block: 0, frame: 0);
-                        currentFrame = NewBlendableTransform.Lerp(currentFrame, nextFrame, frame % 1);
-                        resultList.Add(currentFrame);
-                    }
-                    // Regular frame
-                    else
-                    {
-                        NewBlendableTransform currentFrame = GetTransformOnSpecificBlockAndFrame(t,
-                            block: currentBlock, frame);
-                        resultList.Add(currentFrame);
-                    }
-                }
-            }
-
-            return resultList;
+            return output;
         }
 
-        public static List<TransformTrack[]> ReadSplineCompressedAnimByteBlock(
-            bool isBigEndian, byte[] animationData, int numTransformTracks, int numBlocks)
+        public float SetClampedZeroOne(float a)
         {
-            List<TransformTrack[]> blocks = new List<TransformTrack[]>();
-
-            var br = new BinaryReaderEx(isBigEndian, animationData);
-
-            for (int blockIndex = 0; blockIndex < numBlocks; blockIndex++)
+            float result = a;
+            if (float.IsNaN(a))
             {
-                var TransformTracks = new TransformTrack[numTransformTracks];
-
-                for (int i = 0; i < numTransformTracks; i++)
-                {
-                    TransformTracks[i] = new TransformTrack();
-                }
-
-                for (int i = 0; i < numTransformTracks; i++)
-                {
-                    TransformTracks[i].Mask = new TransformMask(br);
-                }
-
-                br.Pad(4);
-
-                for (int i = 0; i < numTransformTracks; i++)
-                {
-                    var m = TransformTracks[i].Mask;
-                    var track = TransformTracks[i];
-
-                    track.HasSplinePosition = m.PositionTypes.Contains(FlagOffset.SplineX)
-                        || m.PositionTypes.Contains(FlagOffset.SplineY)
-                        || m.PositionTypes.Contains(FlagOffset.SplineZ);
-
-                    track.HasSplineRotation = m.RotationTypes.Contains(FlagOffset.SplineX)
-                        || m.RotationTypes.Contains(FlagOffset.SplineY)
-                        || m.RotationTypes.Contains(FlagOffset.SplineZ)
-                        || m.RotationTypes.Contains(FlagOffset.SplineW);
-
-                    track.HasStaticRotation = m.RotationTypes.Contains(FlagOffset.StaticX)
-                        || m.RotationTypes.Contains(FlagOffset.StaticY)
-                        || m.RotationTypes.Contains(FlagOffset.StaticZ)
-                        || m.RotationTypes.Contains(FlagOffset.StaticW);
-
-                    track.HasSplineScale = m.ScaleTypes.Contains(FlagOffset.SplineX)
-                        || m.ScaleTypes.Contains(FlagOffset.SplineY)
-                        || m.ScaleTypes.Contains(FlagOffset.SplineZ);
-
-                    if (track.HasSplinePosition)
-                    {
-                        track.SplinePosition = new SplineTrackVector3(br, m.PositionTypes, m.PositionQuantizationType, isPosition: true);
-                    }
-                    else
-                    {
-                        if (m.PositionTypes.Contains(FlagOffset.StaticX))
-                        {
-                            track.StaticPosition.X = br.ReadSingle();
-                        }
-
-                        if (m.PositionTypes.Contains(FlagOffset.StaticY))
-                        {
-                            track.StaticPosition.Y = br.ReadSingle();
-                        }
-
-                        if (m.PositionTypes.Contains(FlagOffset.StaticZ))
-                        {
-                            track.StaticPosition.Z = br.ReadSingle();
-                        }
-                    }
-
-                    br.Pad(4);
-
-
-
-                    if (track.HasSplineRotation)
-                    {
-                        track.SplineRotation = new SplineTrackQuaternion(br, m.RotationQuantizationType);
-                    }
-                    else
-                    {
-                        if (track.HasStaticRotation)
-                        {
-                            br.Pad(GetRotationAlign(m.RotationQuantizationType));
-                            track.StaticRotation = ReadQuantizedQuaternion(br, m.RotationQuantizationType); //br.ReadBytes(GetRotationByteCount(m.RotationQuantizationType));
-                        }
-                    }
-
-                    br.Pad(4);
-
-                    if (track.HasSplineScale)
-                    {
-                        track.SplineScale = new SplineTrackVector3(br, m.ScaleTypes, m.ScaleQuantizationType, isPosition: false);
-                    }
-                    else
-                    {
-                        if (m.ScaleTypes.Contains(FlagOffset.StaticX))
-                        {
-                            track.StaticScale.X = br.ReadSingle();
-                        }
-
-                        if (m.ScaleTypes.Contains(FlagOffset.StaticY))
-                        {
-                            track.StaticScale.Y = br.ReadSingle();
-                        }
-
-                        if (m.ScaleTypes.Contains(FlagOffset.StaticZ))
-                        {
-                            track.StaticScale.Z = br.ReadSingle();
-                        }
-                    }
-
-                    br.Pad(4);
-                }
-
-                br.Pad(16);
-
-                blocks.Add(TransformTracks);
+                result = 1.0f;
             }
-
-            return blocks;
+            else
+            {
+                result = Math.Min(1.0f, Math.Max(a, 0.0f));
+            }
+            return result;
         }
+        public static long ComputePackedNurbsOffsets(uint blockOffset, uint maskAndQuantizationSize)
+        {
+            // Just return the sum of the base and offsets.
+            // QuantizedMask would never have the high bit set anyway... or your animation is over 2Gb
+            return blockOffset + (maskAndQuantizationSize & ~0x80000000);
+        }
+
     }
 }

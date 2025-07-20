@@ -1,5 +1,4 @@
-﻿using Assimp;
-using SoulsFormats;
+﻿using SoulsFormats;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -234,230 +233,8 @@ namespace SoulsAssetPipeline
             return ret;
         }
 
-        static NVector3 _quaternion2Euler(Quaternion q, EulerOrder rotSeq)
-        {
-            switch (rotSeq)
-            {
-                case EulerOrder.ZYX:
-                    return threeaxisrot(2 * (q.X * q.Y + q.W * q.Z),
-                        q.W * q.W + q.X * q.X - q.Y * q.Y - q.Z * q.Z,
-                        -2 * (q.X * q.Z - q.W * q.Y),
-                        2 * (q.Y * q.Z + q.W * q.X),
-                        q.W * q.W - q.X * q.X - q.Y * q.Y + q.Z * q.Z);
 
-
-                case EulerOrder.ZYZ:
-                    return twoaxisrot(2 * (q.Y * q.Z - q.W * q.X),
-                        2 * (q.X * q.Z + q.W * q.Y),
-                        q.W * q.W - q.X * q.X - q.Y * q.Y + q.Z * q.Z,
-                        2 * (q.Y * q.Z + q.W * q.X),
-                        -2 * (q.X * q.Z - q.W * q.Y));
-
-
-                case EulerOrder.ZXY:
-                    return threeaxisrot(-2 * (q.X * q.Y - q.W * q.Z),
-                        q.W * q.W - q.X * q.X + q.Y * q.Y - q.Z * q.Z,
-                        2 * (q.Y * q.Z + q.W * q.X),
-                        -2 * (q.X * q.Z - q.W * q.Y),
-                        q.W * q.W - q.X * q.X - q.Y * q.Y + q.Z * q.Z);
-
-
-                case EulerOrder.ZXZ:
-                    return twoaxisrot(2 * (q.X * q.Z + q.W * q.Y),
-                        -2 * (q.Y * q.Z - q.W * q.X),
-                        q.W * q.W - q.X * q.X - q.Y * q.Y + q.Z * q.Z,
-                        2 * (q.X * q.Z - q.W * q.Y),
-                        2 * (q.Y * q.Z + q.W * q.X));
-
-
-                case EulerOrder.YXZ:
-                    return threeaxisrot(2 * (q.X * q.Z + q.W * q.Y),
-                        q.W * q.W - q.X * q.X - q.Y * q.Y + q.Z * q.Z,
-                        -2 * (q.Y * q.Z - q.W * q.X),
-                        2 * (q.X * q.Y + q.W * q.Z),
-                        q.W * q.W - q.X * q.X + q.Y * q.Y - q.Z * q.Z);
-
-                case EulerOrder.YXY:
-                    return twoaxisrot(2 * (q.X * q.Y - q.W * q.Z),
-                        2 * (q.Y * q.Z + q.W * q.X),
-                        q.W * q.W - q.X * q.X + q.Y * q.Y - q.Z * q.Z,
-                        2 * (q.X * q.Y + q.W * q.Z),
-                        -2 * (q.Y * q.Z - q.W * q.X));
-
-
-                case EulerOrder.YZX:
-                    return threeaxisrot(-2 * (q.X * q.Z - q.W * q.Y),
-                        q.W * q.W + q.X * q.X - q.Y * q.Y - q.Z * q.Z,
-                        2 * (q.X * q.Y + q.W * q.Z),
-                        -2 * (q.Y * q.Z - q.W * q.X),
-                        q.W * q.W - q.X * q.X + q.Y * q.Y - q.Z * q.Z);
-
-
-                case EulerOrder.YZY:
-                    return twoaxisrot(2 * (q.Y * q.Z + q.W * q.X),
-                        -2 * (q.X * q.Y - q.W * q.Z),
-                        q.W * q.W - q.X * q.X + q.Y * q.Y - q.Z * q.Z,
-                        2 * (q.Y * q.Z - q.W * q.X),
-                        2 * (q.X * q.Y + q.W * q.Z));
-
-
-                case EulerOrder.XYZ:
-                    return threeaxisrot(-2 * (q.Y * q.Z - q.W * q.X),
-                        q.W * q.W - q.X * q.X - q.Y * q.Y + q.Z * q.Z,
-                        2 * (q.X * q.Z + q.W * q.Y),
-                        -2 * (q.X * q.Y - q.W * q.Z),
-                        q.W * q.W + q.X * q.X - q.Y * q.Y - q.Z * q.Z);
-
-
-                case EulerOrder.XYX:
-                    return twoaxisrot(2 * (q.X * q.Y + q.W * q.Z),
-                        -2 * (q.X * q.Z - q.W * q.Y),
-                        q.W * q.W + q.X * q.X - q.Y * q.Y - q.Z * q.Z,
-                        2 * (q.X * q.Y - q.W * q.Z),
-                        2 * (q.X * q.Z + q.W * q.Y));
-
-
-                case EulerOrder.XZY:
-                    return threeaxisrot(2 * (q.Y * q.Z + q.W * q.X),
-                        q.W * q.W - q.X * q.X + q.Y * q.Y - q.Z * q.Z,
-                        -2 * (q.X * q.Y - q.W * q.Z),
-                        2 * (q.X * q.Z + q.W * q.Y),
-                        q.W * q.W + q.X * q.X - q.Y * q.Y - q.Z * q.Z);
-
-
-                case EulerOrder.XZX:
-                    return twoaxisrot(2 * (q.X * q.Z - q.W * q.Y),
-                        2 * (q.X * q.Y + q.W * q.Z),
-                        q.W * q.W + q.X * q.X - q.Y * q.Y - q.Z * q.Z,
-                        2 * (q.X * q.Z + q.W * q.Y),
-                        -2 * (q.X * q.Y - q.W * q.Z));
-
-                default:
-                    return NVector3.Zero;
-
-            }
-        }
-
-        public static NVector3 QuaternionToEuler_Legacy(Quaternion q)
-        {
-            // Store the Euler angles in radians
-            NVector3 pitchYawRoll = new NVector3();
-
-            double sqw = q.W * q.W;
-            double sqx = q.X * q.X;
-            double sqy = q.Y * q.Y;
-            double sqz = q.Z * q.Z;
-
-            // If quaternion is normalised the unit is one, otherwise it is the correction factor
-            double unit = sqx + sqy + sqz + sqw;
-            double test = q.X * q.Y + q.Z * q.W;
-
-            if (test > 0.4995f * unit)                              // 0.4999f OR 0.5f - EPSILON
-            {
-                // Singularity at north pole
-                pitchYawRoll.Y = 2f * (float)Math.Atan2(q.X, q.W);  // Yaw
-                pitchYawRoll.Z = SapMath.Pi * 0.5f;                 // Pitch
-                pitchYawRoll.X = 0f;                                // Roll
-                return pitchYawRoll;
-            }
-            else if (test < -0.4995f * unit)                        // -0.4999f OR -0.5f + EPSILON
-            {
-                // Singularity at south pole
-                pitchYawRoll.Y = -2f * (float)Math.Atan2(q.X, q.W); // Yaw
-                pitchYawRoll.Z = -SapMath.Pi * 0.5f;                // Pitch
-                pitchYawRoll.X = 0f;                                // Roll
-                return pitchYawRoll;
-            }
-            else
-            {
-                pitchYawRoll.Y = (float)Math.Atan2(2f * q.Y * q.W - 2f * q.X * q.Z, sqx - sqy - sqz + sqw);      // Yaw
-                pitchYawRoll.Z = (float)Math.Asin(2f * test / unit);                                             // Pitch
-                pitchYawRoll.X = (float)Math.Atan2(2f * q.X * q.W - 2f * q.Y * q.Z, -sqx + sqy - sqz + sqw);     // Roll
-            }
-
-            return pitchYawRoll;
-        }
-
-        public static NVector3 QuaternionToEuler(Quaternion q, EulerOrder rotSeq)
-        {
-            NVector3 res = _quaternion2Euler(q, rotSeq);
-            var result = new NVector3();
-            float test = q.W * q.Z + q.X * q.Y;
-            float unit = q.X * q.X + q.Y * q.Y + q.Z * q.Z + q.W * q.W;
-            switch (rotSeq)
-            {
-                case EulerOrder.ZYX:
-                    result.X = res.X;
-                    result.Y = res.Y;
-                    result.Z = res.Z;
-                    break;
-
-                case EulerOrder.ZXY:
-                    result.X = res.Y;
-                    result.Y = res.X;
-                    result.Z = res.Z;
-                    break;
-
-                case EulerOrder.YXZ:
-                    result.X = res.Z;
-                    result.Y = res.X;
-                    result.Z = res.Y;
-                    break;
-
-                case EulerOrder.YZX:
-                    result.X = res.X;
-                    result.Y = res.Z;
-                    result.Z = res.Y;
-                    // Handle poles
-                    if (test > 0.4995f * unit)
-                    {
-                        result.X = 0.0f;
-                        result.Y = 2.0f * (float)Math.Atan2(q.Y, q.Z);
-                        result.Z = 90.0f * Deg2Rad;
-                    }
-                    if (test < -0.4995f * unit)
-                    {
-                        result.X = 0.0f;
-                        result.Y = -2.0f * (float)Math.Atan2(q.Y, q.Z);
-                        result.Z = -90.0f * Deg2Rad;
-                    }
-                    break;
-
-                case EulerOrder.XYZ:
-                    result.X = res.Z;
-                    result.Y = res.Y;
-                    result.Z = res.X;
-                    break;
-
-                case EulerOrder.XZY:
-                    result.X = res.Y;
-                    result.Y = res.Z;
-                    result.Z = res.X;
-                    // Handle poles
-                    if (test > 0.4995f * unit)
-                    {
-                        result.X = -90.0f * Deg2Rad;
-                        result.Y = -2.0f * (float)Math.Atan2(q.Y, q.Z);
-                        result.Z = 0;
-                    }
-                    if (test < -0.4995f * unit)
-                    {
-                        result.X = 0.0f;
-                        result.Y = 2.0f * (float)Math.Atan2(q.Y, q.Z);
-                        result.Z = -90.0f * Deg2Rad;
-                    }
-                    break;
-
-                default:
-                    return System.Numerics.Vector3.Zero;
-            }
-            result.X = (result.X <= -180.0f * Deg2Rad) ? result.X + 360.0f * Deg2Rad : result.X;
-            result.Y = (result.Y <= -180.0f * Deg2Rad) ? result.Y + 360.0f * Deg2Rad : result.Y;
-            result.Z = (result.Z <= -180.0f * Deg2Rad) ? result.Z + 360.0f * Deg2Rad : result.Z;
-            return result;
-
-
-        }
+        
 
 
         public static float Clamp(float value, float min, float max)
@@ -504,7 +281,7 @@ namespace SoulsAssetPipeline
             return a + ((b - a) * s);
         }
 
-        public static FLVER.VertexColor ToFlverVertexColor(this Color4D c)
+        /*public static FLVER.VertexColor ToFlverVertexColor(this Color4D c)
         {
             return new FLVER.VertexColor(c.A, c.R, c.G, c.B);
         }
@@ -517,6 +294,6 @@ namespace SoulsAssetPipeline
         public static NQuaternion ToNumerics(this Quaternion q)
         {
             return new NQuaternion(q.X, q.Y, q.Z, q.W);
-        }
+        }*/
     }
 }

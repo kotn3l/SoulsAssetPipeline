@@ -91,7 +91,7 @@ namespace Havoc.Collections
             if ( mIndexMap.ContainsKey( item ) )
                 return;
 
-            index = Math.Min( index, mList.Count );
+            index = System.Math.Min( index, mList.Count );
             if ( index != mList.Count )
                 foreach ( var value in mList )
                 {

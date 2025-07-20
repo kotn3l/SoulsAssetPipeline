@@ -1069,6 +1069,11 @@ namespace SoulsAssetPipeline.Animation
                 return GetArrayData().Elements.Any(predicate);
             }
 
+            public void Insert(int v, T item)
+            {
+                GetArrayData().Elements.Insert(v, item);
+            }
+
             // Allow indexing as an array
             public T this[int i]
             {

@@ -118,8 +118,7 @@ namespace SoulsAssetPipeline.Animation
             BlockCount = anim.BlockCount;
             NumFramesPerBlock = anim.FramesPerBlock;
 
-            Tracks = SplineCompressedAnimation.ReadSplineCompressedAnimByteBlock(
-                isBigEndian: false, anim.GetData(), anim.TransformTrackCount, anim.BlockCount);
+            Tracks = ReadSplineCompressedAnimByteBlock(isBigEndian: false);
         }
 
 
@@ -160,6 +159,9 @@ namespace SoulsAssetPipeline.Animation
                 }
                 TransformTrackIndexToHkxBoneMap[i] = boneIndex;
             }
+            //SamplePartialTracks(2.2f);
+            Tracks = ReadSplineCompressedAnimByteBlock(false);
+        }
 
             Tracks = SplineCompressedAnimation.ReadSplineCompressedAnimByteBlock(
                 isBigEndian: false, anim.GetData(), anim.TransformTrackCount, anim.BlockCount);
@@ -185,17 +187,21 @@ namespace SoulsAssetPipeline.Animation
 
             if (enableLooping)
             {
-                frame %= FrameCount - 1;
+                frame %= (FrameCount-1);
             }
             else
             {
                 frame = Math.Min(frame, FrameCount);
             }
 
-            frame %= NumFramesPerBlock - 1;
+            frame %= (NumFramesPerBlock - 1);
+            //GetFrameAndDelta(frame, out int frameOut, out float delta);
+            //GetBlockAndTime(frameOut, delta, out int blockout, out float timeout, out byte qtout);
+            //frame = timeout;
+            //block = blockout;
+            var track = Tracks[block][transformIndex];
 
             NewBlendableTransform result = NewBlendableTransform.Identity;
-            var track = Tracks[block][transformIndex];
             var skeleTransform = hkaSkeleton != null ? hkaSkeleton.Transforms[TransformTrackIndexToHkxBoneMap[transformIndex]] : new HKX.Transform() { Scale = new HKX.HKVector4(new Vector4(1,1,1,1)) };
 
             //result.Scale.X = track.SplineScale?.ChannelX == null
@@ -232,6 +238,17 @@ namespace SoulsAssetPipeline.Animation
                     result.Scale.Z = track.StaticScale.Z;
                 else
                     result.Scale.Z = IsAdditiveBlend ? 1 : skeleTransform.Scale.Vector.Z;
+
+
+                if (track.Mask.ScaleTypes.Count == 1)
+                {
+                    if (track.Mask.ScaleTypes.Contains(FlagOffset.StaticX))
+                    {
+                        result.Scale.Y = track.StaticScale.X;
+                        result.Scale.Z = track.StaticScale.X;
+                    }
+                }
+
             }
 
             //if (IsAdditiveBlend)
@@ -383,6 +400,38 @@ namespace SoulsAssetPipeline.Animation
             //        block: CurrentBlock, frame);
             //    return currentFrame;
             //}
+        }
+        public List<TransformTrack[]> ReadSplineCompressedAnimByteBlock(bool isBigEndian)
+        {
+            List<TransformTrack[]> blocks = new List<TransformTrack[]>();
+            var br = new BinaryReaderEx(isBigEndian, anim.GetData());
+
+
+            //var see = ComputePackedNurbsOffsets(anim.BlockOffsets[0].data, anim.MaskAndQuantization);
+            //var see1 = ComputePackedNurbsOffsets(anim.BlockOffsets[0].data, 0x80000000);
+
+            for (int blockIndex = 0; blockIndex < anim.BlockCount; blockIndex++)
+            {
+                var TransformTracks = new TransformTrack[anim.TransformTrackCount];
+
+                for (int i = 0; i < anim.TransformTrackCount; i++)
+                {
+                    TransformTracks[i] = new TransformTrack(br);
+                }
+
+                br.Pad(4);
+
+                for (int i = 0; i < anim.TransformTrackCount; i++)
+                {
+                    TransformTracks[i].ReadValues();
+                }
+
+                br.Pad(16);
+
+                blocks.Add(TransformTracks);
+            }
+
+            return blocks;
         }
     }
 
